@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import cv2 as cv
-import sys
-import time
 from datetime import datetime
 import readVote
-import os
 import imprimeResultado
 
 
