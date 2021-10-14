@@ -60,3 +60,5 @@ out.release()
 # Imprime resultado
 imprimeResultado.run(totalVotosPresidente, 'Presidente')
 imprimeResultado.run(totalVotosDeputado, 'Deputado')
+
+# TODO: Adicionar validação da contagem pelo vídeo com o número de boletas na urna física.
