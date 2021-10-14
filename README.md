@@ -1,2 +1,2 @@
-# GermanyUrn
-An electronic urn project to attend the requirements of the Germans.
+# VJPC-VoteCounter
+Vote totalization by CV.
