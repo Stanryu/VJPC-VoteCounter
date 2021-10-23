@@ -12,7 +12,7 @@ nFrames = 30
 now = datetime.now()
 out_file_name = 'Totalizacao--Zona_' + zona + '-Secao_' + secao + '-Data' + (str(now.date()) + '_' + str(now.hour)+'-' +
                                                                              str(now.minute)+'-'+str(now.second) + '.avi')
-# out_file_name = 'saida.avi'
+# out_file_name = 'saida1.avi'
 
 
 # Formato do vídeo (Avi)

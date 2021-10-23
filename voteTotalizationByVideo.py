@@ -28,7 +28,7 @@ while(cap.isOpened()):
         totalVotosDeputado[deputado] = totalVotosDeputado[deputado] + \
             1 if deputado in totalVotosDeputado else 1
         # if cv.waitKey(0) & 0xFF == ord('q'):
-        #     break
+            #break
     else:
         break
 

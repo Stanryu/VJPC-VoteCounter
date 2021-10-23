@@ -24,7 +24,7 @@ camera = cv.VideoCapture(camera_port)
 fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 now = datetime.now()
 out_file_name = (str(now.date()) + '_' + str(now.hour)+'-'+str(now.minute) +
-         '-'+str(now.second)+'_' + zona + '_' + secao + '.avi')
+         '-' + str(now.second) + '_' + zona + '_' + secao + '.avi')
 
 out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (640, 480))
 
