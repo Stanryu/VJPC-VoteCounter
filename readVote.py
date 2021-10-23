@@ -116,7 +116,7 @@ def run2(boleta):
     posicaoQuadrados.sort(key = lambda x : x[1])
 
     matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y)
-    #print(matriz)
+    # print(matriz)
     
     print('Implementação - Paulo')
     imprime_votos1(matriz)
