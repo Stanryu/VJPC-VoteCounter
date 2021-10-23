@@ -18,19 +18,19 @@ out_file_name = 'Totalizacao--Zona_' + zona + '-Secao_' + secao + '-Data' + (str
 # Formato do vídeo (Avi)
 fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
-# Diretório
+# Diretórios
 urna = '/UrnaFisica/'
+saida = '/Output/'
 
 # Lista de nomes dos arquivos (boletas)
-boletas = os.listdir(os.getcwd()+urna)
+boletas = os.listdir(os.getcwd() + urna)
 
-# Identifica tamanhos das imagens das imagens.
-img = cv.imread(os.getcwd()+urna+boletas[0])
+# Identifica tamanhos das imagens
+img = cv.imread(os.getcwd() + urna + boletas[0])
 height, width, layers = img.shape
 
 # Cria escritor de vídeo com base nas configurações identificadas
-out = cv.VideoWriter(out_file_name, fourcc, nFrames, (width, height))
-
+out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (width, height))
 
 # Inicializa mapas de votação
 totalVotosPresidente = {}
@@ -40,12 +40,11 @@ totalVotosDeputado = {}
 for boleta in boletas:
 
     # Adiciona a imagem da boleta em um frame do vídeo
-    img = cv.imread(os.getcwd()+urna+boleta)
+    img = cv.imread(os.getcwd() + urna + boleta)
     out.write(img)
 
     # Lê os votos da boleta atual
-    img_g = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
-    presidente, deputado = readVote.run2(img, img_g)
+    presidente, deputado = readVote.run2(img)
 
     # Contabiliza os votos da boleta
     totalVotosPresidente[presidente] = totalVotosPresidente[presidente] + \

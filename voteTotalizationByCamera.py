@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cv2 as cv
 import sys
+import os
 import time
 from datetime import datetime
 
@@ -16,13 +17,16 @@ camera_port = 0
 nFrames = 30.0
 emLoop = True
 
+# Diretório dos vídeos
+saida = '/Output/'
+
 camera = cv.VideoCapture(camera_port)
 fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 now = datetime.now()
-saida = (str(now.date()) + '_' + str(now.hour)+'-'+str(now.minute) +
+out_file_name = (str(now.date()) + '_' + str(now.hour)+'-'+str(now.minute) +
          '-'+str(now.second)+'_' + zona + '_' + secao + '.avi')
 
-out = cv.VideoWriter(saida, fourcc, nFrames, (640, 480))
+out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (640, 480))
 
 if not camera.isOpened():
     print('Nao foi possivel abrir a web cam.')
