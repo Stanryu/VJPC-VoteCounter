@@ -249,7 +249,7 @@ def imprime_votos2(matriz):
                 
                 # Caso em que existam dois ou mais retângulos na mesma linha
                 if i < 2 and check[i][0] > 1:
-                    i = 2
+                    i = 1
                     break
                 elif i >= 2 and check[i][0] > 1:
                     i = len(matriz)
