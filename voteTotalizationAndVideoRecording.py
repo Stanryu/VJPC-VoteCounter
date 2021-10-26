@@ -29,6 +29,10 @@ boletas = os.listdir(os.getcwd() + urna)
 img = cv.imread(os.getcwd() + urna + boletas[0])
 height, width, layers = img.shape
 
+# O diretótio '/Output/' é criado caso não exista
+if not os.path.isdir(os.getcwd() + saida):
+    os.mkdir(os.getcwd() + saida)
+
 # Cria escritor de vídeo com base nas configurações identificadas
 out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (width, height))
 

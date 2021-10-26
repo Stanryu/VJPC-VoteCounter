@@ -8,6 +8,10 @@ import imprimeResultado
 # Diretório dos vídeos
 saida = '/Output/'
 
+# O diretótio '/Output/' é criado caso não exista
+if not os.path.isdir(os.getcwd() + saida):
+    os.mkdir(os.getcwd() + saida)
+
 # TODO: Adicionar verificação de existencia de arquivo
 cap = cv.VideoCapture(os.getcwd() + saida +
     'Totalizacao--Zona_256-Secao_1-Data2021-10-13_20-46-30.avi')

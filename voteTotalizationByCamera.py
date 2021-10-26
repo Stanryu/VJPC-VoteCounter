@@ -26,6 +26,10 @@ now = datetime.now()
 out_file_name = (str(now.date()) + '_' + str(now.hour)+'-'+str(now.minute) +
          '-' + str(now.second) + '_' + zona + '_' + secao + '.avi')
 
+# O diretótio '/Output/' é criado caso não exista
+if not os.path.isdir(os.getcwd() + saida):
+    os.mkdir(os.getcwd() + saida)
+    
 out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (640, 480))
 
 if not camera.isOpened():
