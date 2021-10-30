@@ -3,6 +3,7 @@ import cv2 as cv
 import numpy as np
 import sys
 import os
+import electionConfiguration
 
 FONTE = cv.FONT_HERSHEY_SIMPLEX
 PROPORCAO_BARRA = 130.0
@@ -11,7 +12,7 @@ PROPORCAO_BARRA = 130.0
 
 def mostrar(titulo, imagem):
     cv.imshow(titulo, imagem)
-    cv.waitKey(0)
+    cv.waitcargo_atualey(0)
 
 
 def run2(boleta):
@@ -115,21 +116,24 @@ def run2(boleta):
 
     posicaoQuadrados.sort(key = lambda x : x[1])
 
-    matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y)
+    #matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y)
     # print(matriz)
+
+    # file, qtd = electionConfiguration.configElection()
+    # cargos, linhas, campos = electionConfiguration.readConfigFile(file, qtd)
+
+    # Teste sem análise de boleta e construção de matriz
+    campos = [2, 4, 9]
+    cargos = ['Governador', 'Presidente', 'Deputado']
+    linhas = 9
+
+    votos = imprime_votos2(campos, cargos, linhas)
+    print(votos)
     
-    print('Implementação - Paulo')
-    imprime_votos1(matriz)
 
-    print('\nImplementação - Julio')
-    presidente, deputado = imprime_votos2(matriz)
+def construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y, linhas, campos):
 
-    return ''.join(presidente), ''.join(deputado)
-    
-
-def construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y):
-
-    matrix = np.zeros((7, 10))
+    matrix = np.zeros((linhas, 10))
 
     # Correções para a identificação dos votos nos campos
     salto = distanciaUnitaria_y * 2
@@ -154,8 +158,8 @@ def construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x,
         y_atual += distanciaUnitaria_y
         i += 1
 
-        # Salto entre os campos de votos de presidente e deputado
-        if i == 2:
+        # Salto entre os campos de votos dos cargos
+        if i in campos:
             y_atual += salto
 
     return matrix
@@ -222,24 +226,22 @@ def imprime_votos1(m):
 
 
 # Implementação da leitura dos votos da matriz --- Julio
-def imprime_votos2(matriz):
+def imprime_votos2(campos, cargos, linhas):
 
-    # Matriz de teste (Boleta teste.jpg)
-    # matriz = np.zeros((7, 10))
-    # matriz[0][0] = 1
-    # matriz[0][3] = 1
-    # matriz[0][6] = 1
-    # matriz[1][4] = 1
-    # matriz[4][5] = 1
-
-    presidente = []
-    deputado = []
+    matriz = np.zeros((linhas, 10))
+    matriz[0][0] = 1
+    matriz[0][3] = 1
+    matriz[0][6] = 1
+    matriz[1][4] = 1
+    matriz[2][1] = 1
+    matriz[3][7] = 1
+    matriz[4][5] = 1
     
     # Matriz para checagem da ocorrência de dígitos por linha
     check = np.zeros((len(matriz), 2))
 
-    i = 0
-    while i < (len(matriz)):
+    i, cargo_atual = 0, 0
+    while i < (len(matriz)) and cargo_atual < len(campos):
         for j in range(len(matriz[0])):
 
             if matriz[i][j]:
@@ -248,11 +250,9 @@ def imprime_votos2(matriz):
                 check[i][0] += 1
                 
                 # Caso em que existam dois ou mais retângulos na mesma linha
-                if i < 2 and check[i][0] > 1:
-                    i = 1
-                    break
-                elif i >= 2 and check[i][0] > 1:
-                    i = len(matriz)
+                if i < campos[cargo_atual] and check[i][0] > 1:
+                    i = campos[cargo_atual] - 1
+                    cargo_atual += 1
                     break
                 
                 # Armazena os dígitos do voto
@@ -260,42 +260,42 @@ def imprime_votos2(matriz):
                     check[i][1] = j + 1
                 else:
                     check[i][1] = 0
-                
 
             # Caso em que exista(m) linha(s) em branco nos campos da boleta
-            if i < 2 and j == len(matriz[0]) - 1 and check[i][0] == 0:
-                i = 1
-                break
-            elif i >= 2 and j == len(matriz[0]) - 1 and check[i][0] == 0:
-                i = len(matriz)
+            if i < campos[cargo_atual] and j == len(matriz[0]) - 1 and check[i][0] == 0:
+                i = campos[cargo_atual] - 1
+                cargo_atual += 1
                 break
 
         i += 1
 
     #print(check)
+    # Layout da boleta ---> [('2', 'Governador'), ('2', 'Presidente'), ('5', 'Deputado')]
+    # Cargos ---> ['Governador', 'Presidente', 'Deputado']
+    # Linhas ---> 9
+    # Campos ---> [2, 4, 9]
 
+    i, cargo_atual = 0, 0
+    votos = [''] * len(cargos)
+    
     # Se foram identificadas 2 ou mais marcações na mesma linha dos campos, o voto é "descartado"
-    i = 0
-    while i < len(check):
+    while i < len(check) and cargo_atual < len(cargos):
 
-        if i < 2 and check[i][0] == 1:
-            presidente.append(str(int(check[i][1])))
+        # Enquanto estiver nos campos do cargo atual
+        if i < campos[cargo_atual] and check[i][0] == 1:
+            votos[cargo_atual] += str(int(check[i][1]))
 
-        elif i < 2 and check[i][0] != 1:
-            del(presidente[:])
-            i = 2
+        elif i < campos[cargo_atual] and check[i][0] != 1:
+            votos[cargo_atual] = ''
+
+            # Passagem para o próximo cargo
+            i = campos[cargo_atual]
+            cargo_atual += 1
             continue
-
-        elif i >= 2 and check[i][0] == 1:
-            deputado.append(str(int(check[i][1])))
-
-        else:
-            del(deputado[:])
-            break
 
         i += 1
 
-    return ''.join(presidente), ''.join(deputado)
+    return votos
 
 
 if __name__ == '__main__':
