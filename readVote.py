@@ -116,18 +116,19 @@ def run2(boleta):
 
     posicaoQuadrados.sort(key = lambda x : x[1])
 
-    #matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y)
-    # print(matriz)
+    # Teste - Boleta Presidencial
+    campos = [5, 9, 12, 14, 16]
+    cargos = ['Deputado Estadual', 'Deputado Federal', 'Senador', 'Governador', 'Presidente da República']
+    linhas = 16
 
+    # Configuração da Eleição
     # file, qtd = electionConfiguration.configElection()
     # cargos, linhas, campos = electionConfiguration.readConfigFile(file, qtd)
 
-    # Teste sem análise de boleta e construção de matriz
-    campos = [2, 4, 9]
-    cargos = ['Governador', 'Presidente', 'Deputado']
-    linhas = 9
+    matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y, linhas, campos)
+    print(matriz)
 
-    votos = imprime_votos2(campos, cargos, linhas)
+    votos = imprime_votos2(matriz, campos, cargos)
     print(votos)
     
 
@@ -165,7 +166,6 @@ def construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x,
     return matrix
 
 
-# Implementação da leitura dos votos da matriz --- Paulo
 def imprime_votos1(m):
 
     # Matriz de teste
@@ -225,17 +225,16 @@ def imprime_votos1(m):
     print(f"Presidente: {presidente}\n Deputado:{deputado}")
 
 
-# Implementação da leitura dos votos da matriz --- Julio
-def imprime_votos2(campos, cargos, linhas):
+def imprime_votos2(matriz, campos, cargos):
 
-    matriz = np.zeros((linhas, 10))
-    matriz[0][0] = 1
-    matriz[0][3] = 1
-    matriz[0][6] = 1
-    matriz[1][4] = 1
-    matriz[2][1] = 1
-    matriz[3][7] = 1
-    matriz[4][5] = 1
+    # matriz = np.zeros((linhas, 10))
+    # matriz[0][0] = 1
+    # matriz[0][3] = 1
+    # matriz[0][6] = 1
+    # matriz[1][4] = 1
+    # matriz[2][1] = 1
+    # matriz[3][7] = 1
+    # matriz[4][5] = 1
     
     # Matriz para checagem da ocorrência de dígitos por linha
     check = np.zeros((len(matriz), 2))
@@ -301,9 +300,7 @@ def imprime_votos2(campos, cargos, linhas):
 if __name__ == '__main__':
     # TODO: Adicionar verificação de existencia de arquivo
     #boleta = cv.imread(os.getcwd() + '/Examples/GenerateVideo/boletaVoto.jpg')
-    boleta = cv.imread(os.getcwd() + '/UrnaFisica/voto.jpg')
-
-    # print(run('UrnaFisica/voto.jpg'))
+    boleta = cv.imread(os.getcwd() + '/Novas Boletas/teste.jpg')
 
     # TODO: Mudar print para imprimir resultado
-    print(run2(boleta))
+    run2(boleta)
