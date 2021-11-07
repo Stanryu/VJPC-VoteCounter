@@ -6,37 +6,90 @@ import os
 import electionConfiguration
 
 FONTE = cv.FONT_HERSHEY_SIMPLEX
-PROPORCAO_BARRA = 130.0
+PROPORCAO_BARRA = 100.0
 # PROPORCAO_BARRA = 213.0
+
+
+def recorta(img):
+    # TODO:  Implementar lógica para realizar recorte da área de votação
+    return img[300:1279, 0:750]
+
+
+def removerMarcacoesIniciais(posicaoQuadrados, menor_x, maior_x, tamanho_marcador):
+    i = 0
+    quadradosParaRemoverADireita = []
+    quadradosParaRemoverAEsquerda = []
+    while(i < len(posicaoQuadrados)):
+        # Quadrados que estrapolam o limite a direita da área de votação
+        if posicaoQuadrados[i][0] > maior_x:
+            quadradosParaRemoverADireita.append(posicaoQuadrados[i])
+        # Quadrados que estrapolam o limite a esquerda da área de votação
+        elif posicaoQuadrados[i][0] < menor_x + tamanho_marcador[0]:
+            quadradosParaRemoverAEsquerda.append(posicaoQuadrados[i])
+        i = i + 1
+
+    # Quadrados que estrapolam o limite superior
+    menor_y = None
+    for i in quadradosParaRemoverAEsquerda:
+        if menor_y == None:
+            menor_y = i[1]
+        elif i[1] < menor_y:
+            menor_y = i[1]
+
+    quadradosParaRemoverAcima = []
+    i = 0
+    while(i < len(posicaoQuadrados)):
+        # Quadrados que estrapolam o limite a direita da área de votação
+        if posicaoQuadrados[i][1] < (menor_y + tamanho_marcador[1]):
+            quadradosParaRemoverAcima.append(posicaoQuadrados[i])
+        i += 1
+
+    toRemove = quadradosParaRemoverADireita[:] + \
+        quadradosParaRemoverAEsquerda+quadradosParaRemoverAcima
+
+    result = []
+    for q in posicaoQuadrados:
+        if q not in toRemove:
+            result.append(q)
+    return result
 
 
 def mostrar(titulo, imagem):
     cv.imshow(titulo, imagem)
-    cv.waitcargo_atualey(0)
+    cv.waitKey(0)
 
 
 def run2(boleta):
-    
+
+    # Recorte da área de votação
+    boleta = recorta(boleta)
+
+    # print("shape: " + str(boleta.shape))
     posicaoQuadrados = list()
+
+    # Define tamanho do pincel, que precisa ser um valor ímpar.
     tam_pincel = int(round(boleta.shape[1] / PROPORCAO_BARRA))
-    #print(tam_pincel)
+    if tam_pincel % 2 == 0:
+        tam_pincel += 1
 
     # Boleta em escala cinza
     boleta_cinza = cv.cvtColor(boleta, cv.COLOR_BGR2GRAY)
 
     # Boleta em escala cinza borrada
     boleta_blur = cv.GaussianBlur(boleta_cinza, (tam_pincel, tam_pincel), 0)
+    # mostrar("Borrado", boleta_blur)
 
     # Boleta em escala cinza borrada e binarizada
     ret, boleta_binaria = cv.threshold(
         boleta_blur, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
+    # mostrar("Binario", boleta_binaria)
 
-    # mostrar('Binaria', boleta_binaria)
+    # Identificação de poligonos com 4 lados
     cont, hier = cv.findContours(
         boleta_binaria, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     for c in cont:
-        
+
         perimetro = cv.arcLength(c, True)
         approx = cv.approxPolyDP(c, 0.04 * perimetro, True)
         cv.drawContours(boleta, [c], -1, (0, 255, 0), 1)
@@ -56,35 +109,39 @@ def run2(boleta):
             forma = "Circulo"
 
         if forma == 'Quadrado' or forma == 'Retangulo':
-            posicaoQuadrados.append(tuple((x, y, w, h)))
-            cv.putText(boleta, str(x) + '-' + str(y) + '-' + forma, (x, y),
-                       FONTE, 0.35, (0, 255, 0), 1, cv.LINE_AA)
+            posicaoQuadrados.append(tuple((x, y, w, h, c)))
+            # cv.putText(boleta, str(x) + '-' + str(y), (x, y),
+            #            FONTE, 0.35, (0, 255, 0), 1, cv.LINE_AA)
 
-    cv.imshow('Boleta', boleta)
-    cv.waitKey(0)
+    # cv.imshow('Boleta', boleta)
+    # cv.waitKey(0)
 
-    posicaoQuadrados.sort(key = lambda x : x[1], reverse = True)
-    # print('posicaoQuadrados ', posicaoQuadrados)
-    quadradoFinal = list()
-    quadradoFinal.append(posicaoQuadrados.pop(0))
-    quadradoFinal.append(posicaoQuadrados.pop(0))
-    quadradoFinal.sort(key = lambda x : x[0])
+    posicaoQuadrados.sort(key=lambda x: x[1], reverse=True)
 
-    menor_x = quadradoFinal[0][0]
-    maior_x = quadradoFinal[1][0]
-    maior_y = quadradoFinal[0][1]
-    # print(menor_x)
+    # Identifica os 2 marcadores do rodapé.
+    marcadoresDeRodape = list()
+    marcadoresDeRodape.append(posicaoQuadrados.pop(0))
+    marcadoresDeRodape.append(posicaoQuadrados.pop(0))
+    marcadoresDeRodape.sort(key=lambda x: x[0])
+
+    menor_x = marcadoresDeRodape[0][0]
+    maior_x = marcadoresDeRodape[1][0]
+    maior_y = marcadoresDeRodape[0][1]
+    tamanho_marcador = (marcadoresDeRodape[0][2]+marcadoresDeRodape[1][2]) / \
+        2, (marcadoresDeRodape[0][3] +
+            marcadoresDeRodape[1][3]) / 2
 
     distanciaTotal = maior_x - menor_x
     distanciaUnitaria_x = distanciaTotal / 11
     erro = int(0.2 * distanciaUnitaria_x)
 
-    i = 0
-    while(i < len(posicaoQuadrados)):
-        if posicaoQuadrados[i][0] > maior_x:
-            del(posicaoQuadrados[i])
-        else:
-            i = i + 1
+    result = removerMarcacoesIniciais(
+        posicaoQuadrados, menor_x, maior_x, tamanho_marcador)
+
+    for vote in result:
+        cv.drawContours(boleta, vote[4], -1, (0, 0, 255), 2)
+
+    mostrar('Vote', boleta)
 
     # Identificando os campos de votos
     pos_campo = list()
@@ -104,6 +161,7 @@ def run2(boleta):
                     colunas.append(i[0])
 
     menor_y = pos_campo[-1]
+    print("Menor Y: " + str(menor_y))
     distanciaTotal_y = maior_y - menor_y
     distanciaUnitaria_y = int(distanciaTotal_y / 12)
 
@@ -114,9 +172,9 @@ def run2(boleta):
         else:
             i = i + 1
 
-    posicaoQuadrados.sort(key = lambda x : x[1])
+    posicaoQuadrados.sort(key=lambda x: x[1])
 
-    #matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y)
+    # matriz = construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y)
     # print(matriz)
 
     # file, qtd = electionConfiguration.configElection()
@@ -129,7 +187,7 @@ def run2(boleta):
 
     votos = imprime_votos2(campos, cargos, linhas)
     print(votos)
-    
+
 
 def construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x, menor_x, menor_y, maior_y, linhas, campos):
 
@@ -144,16 +202,17 @@ def construct_matrix(posicaoQuadrados, distanciaUnitaria_y, distanciaUnitaria_x,
     # Analisa a boleta de cima para baixo
     while y_atual < maior_y:
         for square in posicaoQuadrados:
-            
+
             # Checagem da existência de retângulos na linha atual
             if square[1] > y_atual + distanciaUnitaria_y + erro_y:
                 break
-            
+
             # Marcação do voto na matriz
-            coluna = int(round((square[0] - menor_x) / float(distanciaUnitaria_x)) - 1)
+            coluna = int(
+                round((square[0] - menor_x) / float(distanciaUnitaria_x)) - 1)
             matrix[i][coluna] = 1
             del(posicaoQuadrados[0])
-        
+
         # Passagem para a próxima linha dos campos de votos e da matriz
         y_atual += distanciaUnitaria_y
         i += 1
@@ -176,7 +235,7 @@ def imprime_votos1(m):
     #     [0,0,0,0,0,0,0,0,0,0],
     #     [1,0,0,0,0,0,0,0,0,0],
     #     [0,1,0,0,0,0,0,0,0,0]]
-    
+
     presidente = ""
     deputado = ""
     cont = 0
@@ -221,7 +280,7 @@ def imprime_votos1(m):
             flag = 1
 
         cont = cont + 1
-        
+
     print(f"Presidente: {presidente}\n Deputado:{deputado}")
 
 
@@ -236,7 +295,7 @@ def imprime_votos2(campos, cargos, linhas):
     matriz[2][1] = 1
     matriz[3][7] = 1
     matriz[4][5] = 1
-    
+
     # Matriz para checagem da ocorrência de dígitos por linha
     check = np.zeros((len(matriz), 2))
 
@@ -245,16 +304,16 @@ def imprime_votos2(campos, cargos, linhas):
         for j in range(len(matriz[0])):
 
             if matriz[i][j]:
-                
+
                 # Acumula a ocorrência de retângulos na linha atual da matriz
                 check[i][0] += 1
-                
+
                 # Caso em que existam dois ou mais retângulos na mesma linha
                 if i < campos[cargo_atual] and check[i][0] > 1:
                     i = campos[cargo_atual] - 1
                     cargo_atual += 1
                     break
-                
+
                 # Armazena os dígitos do voto
                 if j != len(matriz[0]) - 1:
                     check[i][1] = j + 1
@@ -269,7 +328,7 @@ def imprime_votos2(campos, cargos, linhas):
 
         i += 1
 
-    #print(check)
+    # print(check)
     # Layout da boleta ---> [('2', 'Governador'), ('2', 'Presidente'), ('5', 'Deputado')]
     # Cargos ---> ['Governador', 'Presidente', 'Deputado']
     # Linhas ---> 9
@@ -277,7 +336,7 @@ def imprime_votos2(campos, cargos, linhas):
 
     i, cargo_atual = 0, 0
     votos = [''] * len(cargos)
-    
+
     # Se foram identificadas 2 ou mais marcações na mesma linha dos campos, o voto é "descartado"
     while i < len(check) and cargo_atual < len(cargos):
 
@@ -300,8 +359,8 @@ def imprime_votos2(campos, cargos, linhas):
 
 if __name__ == '__main__':
     # TODO: Adicionar verificação de existencia de arquivo
-    #boleta = cv.imread(os.getcwd() + '/Examples/GenerateVideo/boletaVoto.jpg')
-    boleta = cv.imread(os.getcwd() + '/UrnaFisica/voto.jpg')
+    # boleta = cv.imread(os.getcwd() + '/Examples/GenerateVideo/boletaVoto.jpg')
+    boleta = cv.imread(os.getcwd() + '/Novas Boletas/teste.jpg')
 
     # print(run('UrnaFisica/voto.jpg'))
 
