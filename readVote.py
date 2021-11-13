@@ -3,7 +3,6 @@ import cv2 as cv
 import numpy as np
 import sys
 import os
-import electionConfiguration
 from quadrilateral import quadrilateral
 
 FONTE = cv.FONT_HERSHEY_SIMPLEX
@@ -11,12 +10,108 @@ PROPORCAO_BARRA = 100.0
 # PROPORCAO_BARRA = 213.0
 
 
-def recorta(img):
-    # TODO:  Implementar lógica para realizar recorte da área de votação
-    return img[360:1279, 0:750]
+def mostrar(titulo, imagem):
+    cv.imshow(titulo, imagem)
+    cv.waitKey(0)
+
+
+def recorta(boleta, tipo):
+
+    quadradosBoleta, cabecalho, rodape = list(), list(), list()
+    erro_marcacao = 40
+
+    # Dimensões da boleta e tamanho do pincel
+    height = boleta.shape[0]
+    tam_pincel = int(round(boleta.shape[1] / PROPORCAO_BARRA))
+    if tam_pincel % 2 == 0:
+        tam_pincel += 1
+
+    # Identificação dos quadrados na boleta completa
+    copia_boleta = boleta.copy()
+    quadradosBoleta, copia_boleta = identificaMarcacoes(copia_boleta, tam_pincel)
+
+    # mostrar('boleta full', copia_boleta)
+
+    # Obtém as marcações do cabeçalho
+    quadradosBoleta.sort(key = lambda q : q.y)
+    cabecalho.append(quadradosBoleta.pop(0))
+    cabecalho.append(quadradosBoleta.pop(0))
+
+    # Obtém as marcações do rodapé
+    quadradosBoleta.sort(key = lambda q : q.y, reverse = True)
+    rodape.append(quadradosBoleta.pop(0))
+    rodape.append(quadradosBoleta.pop(0))
+
+    cabecalho.sort(key = lambda q : q.x)
+    rodape.sort(key = lambda q : q.x)
+
+    # print(rodape)
+    # print(cabecalho)
+
+    # Obtém as coordenadas x e y para recortar a área de votos
+    corte_x = rodape[1].x + erro_marcacao
+    dist = int(round(rodape[0].y - cabecalho[0].y))
+
+    # O corte no eixo y é feito de acordo com a proporção que cabeçalho ocupa em cada layout de boleta
+    if tipo:
+        corte_y = int(round(dist * 0.33))
+    else:
+        corte_y = int(round(dist * 0.5))
+
+    # print(corte_x)
+    # print(corte_y)
+
+    return boleta[corte_y : height, 0 : corte_x]
+
+
+def identificaMarcacoes(img, tam_pincel):
+
+    posicaoQuadrados = list()
+
+    # Imagem em escala cinza
+    img_cinza = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+    # Imagem em escala cinza borrada
+    img_blur = cv.GaussianBlur(img_cinza, (tam_pincel, tam_pincel), 0)
+
+    # Imagem em escala cinza borrada e binarizada
+    ret, img_binaria = cv.threshold(img_blur, 0, 255, 
+                                    cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
+
+    # Identificação de poligonos com 4 lados
+    contornos, hier = cv.findContours(img_binaria, 
+                                    cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+
+    for c in contornos:
+
+        perimetro = cv.arcLength(c, True)
+        approx = cv.approxPolyDP(c, 0.04 * perimetro, True)
+        cv.drawContours(img, [c], -1, (0, 255, 0), 1)
+        x, y, w, h = cv.boundingRect(c)
+
+        if len(approx) == 3:
+            forma = "Triangulo"
+
+        elif len(approx) == 4:
+            forma = "Quadrado" if (
+                w/h) >= 0.95 and (w/h) <= 1.05 else "Retangulo"
+
+        elif len(approx) == 5:
+            forma = "Pentagono"
+
+        else:
+            forma = "Circulo"
+
+        if forma == 'Quadrado' or forma == 'Retangulo':
+            posicaoQuadrados.append(quadrilateral((x, y, w, h, c)))
+            cv.putText(img, str(x) + '-' + str(y), (x, y),
+                       FONTE, 0.35, (0, 0, 0), 1, cv.LINE_AA)
+
+    return posicaoQuadrados, img
 
 
 def removerMarcacoesIniciais(posicaoQuadrados, menor_x, maior_x, tamanho_marcador):
+    
     i = 0
     quadradosParaRemoverADireita = []
     quadradosParaRemoverAEsquerda = []
@@ -34,7 +129,7 @@ def removerMarcacoesIniciais(posicaoQuadrados, menor_x, maior_x, tamanho_marcado
     for i in range(len(quadradosParaRemoverAEsquerda)):
         linhas[i] = quadradosParaRemoverAEsquerda[i].y
 
-    print("linhas " + str(linhas))
+    #print("linhas " + str(linhas))
 
     # Quadrados que estrapolam o limite superior
     menor_y = None
@@ -60,24 +155,20 @@ def removerMarcacoesIniciais(posicaoQuadrados, menor_x, maior_x, tamanho_marcado
     for i in range(len(quadradosParaRemoverAcima)):
         colunas[i] = quadradosParaRemoverAcima[i].x
 
-    print("colunas " + str(colunas))
+    #print("colunas " + str(colunas))
 
     result = []
     for q in posicaoQuadrados:
         if q not in toRemove:
             result.append(q)
+
     return result, linhas, colunas
 
 
-def mostrar(titulo, imagem):
-    cv.imshow(titulo, imagem)
-    cv.waitKey(0)
-
-
-def run2(boleta):
+def run2(boleta, tipo):
 
     # Recorte da área de votação
-    boleta = recorta(boleta)
+    boleta = recorta(boleta, tipo)
 
     # print("shape: " + str(boleta.shape))
     posicaoQuadrados = list()
@@ -87,49 +178,9 @@ def run2(boleta):
     if tam_pincel % 2 == 0:
         tam_pincel += 1
 
-    # Boleta em escala cinza
-    boleta_cinza = cv.cvtColor(boleta, cv.COLOR_BGR2GRAY)
+    posicaoQuadrados, boleta = identificaMarcacoes(boleta, tam_pincel)
 
-    # Boleta em escala cinza borrada
-    boleta_blur = cv.GaussianBlur(boleta_cinza, (tam_pincel, tam_pincel), 0)
-    # mostrar("Borrado", boleta_blur)
-
-    # Boleta em escala cinza borrada e binarizada
-    ret, boleta_binaria = cv.threshold(
-        boleta_blur, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
-    # mostrar("Binario", boleta_binaria)
-
-    # Identificação de poligonos com 4 lados
-    cont, hier = cv.findContours(
-        boleta_binaria, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-
-    for c in cont:
-
-        perimetro = cv.arcLength(c, True)
-        approx = cv.approxPolyDP(c, 0.04 * perimetro, True)
-        cv.drawContours(boleta, [c], -1, (0, 255, 0), 1)
-        x, y, w, h = cv.boundingRect(c)
-
-        if len(approx) == 3:
-            forma = "Triangulo"
-
-        elif len(approx) == 4:
-            forma = "Quadrado" if (
-                w/h) >= 0.95 and (w/h) <= 1.05 else "Retangulo"
-
-        elif len(approx) == 5:
-            forma = "Pentagono"
-
-        else:
-            forma = "Circulo"
-
-        if forma == 'Quadrado' or forma == 'Retangulo':
-            posicaoQuadrados.append(quadrilateral((x, y, w, h, c)))
-            cv.putText(boleta, str(x) + '-' + str(y), (x, y),
-                       FONTE, 0.35, (0, 0, 0), 1, cv.LINE_AA)
-
-    # cv.imshow('Boleta', boleta)
-    # cv.waitKey(0)
+    # mostrar('Boleta', boleta)
 
     posicaoQuadrados.sort(key=lambda q: q.y, reverse=True)
 
@@ -142,6 +193,7 @@ def run2(boleta):
     menor_x = marcadoresDeRodape[0].x
     maior_x = marcadoresDeRodape[1].x
     maior_y = marcadoresDeRodape[0].y
+
     tamanho_marcador = (marcadoresDeRodape[0].width + marcadoresDeRodape[1].width) / \
         2, (marcadoresDeRodape[0].height +
             marcadoresDeRodape[1].height) / 2
@@ -152,24 +204,18 @@ def run2(boleta):
     for vote in result:
         cv.drawContours(boleta, vote.c, -1, (0, 0, 255), 2)
 
-    # mostrar('Vote', boleta)
+    mostrar('Vote', boleta)
 
-    # Teste - Boleta Presidencial
-    campos = [5, 9, 12, 14, 16]
-    cargos = ['Deputado Estadual', 'Deputado Federal',
-              'Senador', 'Governador', 'Presidente da República']
-    linhas = 16
-
-    # Configuração da Eleição
-    # file, qtd = electionConfiguration.configElection()
-    # cargos, linhas, campos = electionConfiguration.readConfigFile(file, qtd)
+    # Define as transições dos campos de votos de acordo com o tipo de boleta
+    if tipo:
+        campos = [5, 9, 12, 14, 16]
+    else:
+        campos = [5, 7]
 
     matriz = construct_matrix(result, positionLines, positionColumns)
-    # print(matriz)
-
-    votos = imprime_votos2(matriz, campos, cargos)
+    votos = imprime_votos(matriz, campos)
+    
     print(votos)
-
     mostrar('Vote', boleta)
 
 
@@ -193,75 +239,7 @@ def construct_matrix(votes, positionLines, positionColumns):
     return matrix
 
 
-def imprime_votos1(m):
-
-    # Matriz de teste
-    # m = [[0,0,1,0,0,0,0,0,0,0],
-    #     [0,0,0,0,1,0,0,0,0,0,],
-    #     [0,0,0,0,0,0,0,0,0,0],
-    #     [0,0,0,0,0,0,0,0,0,0],
-    #     [0,0,0,0,0,0,0,0,0,0],
-    #     [1,0,0,0,0,0,0,0,0,0],
-    #     [0,1,0,0,0,0,0,0,0,0]]
-
-    presidente = ""
-    deputado = ""
-    cont = 0
-    flag = 0
-
-    while cont < 2 and flag == 0:
-        invalido = 0
-        con = 0
-        while con < 10:
-            if m[cont][con] == 0:
-                con = con + 1
-                continue
-            if m[cont][con] == 1:
-                invalido = invalido + 1
-                if con == 9:
-                    presidente = presidente + str(0)
-                else:
-                    presidente = presidente + str(con + 1)
-                    con = con + 1
-        if invalido != 1:
-            presidente = 'Voto invalido'
-        cont = cont + 1
-    flag = 0
-
-    while cont < 7 and flag == 0:
-        invalido = 0
-        con = 0
-        while con < 10:
-            if m[cont][con] == 0:
-                con = con + 1
-                continue
-            if m[cont][con] == 1:
-                invalido = invalido + 1
-                if con == 9:
-                    deputado = deputado + str(0)
-                    con = con + 1
-                else:
-                    deputado = deputado + str(con + 1)
-                    con = con + 1
-        if invalido != 1:
-            deputado = " Voto invalido"
-            flag = 1
-
-        cont = cont + 1
-
-    print(f"Presidente: {presidente}\n Deputado:{deputado}")
-
-
-def imprime_votos2(matriz, campos, cargos):
-
-    # matriz = np.zeros((linhas, 10))
-    # matriz[0][0] = 1
-    # matriz[0][3] = 1
-    # matriz[0][6] = 1
-    # matriz[1][4] = 1
-    # matriz[2][1] = 1
-    # matriz[3][7] = 1
-    # matriz[4][5] = 1
+def imprime_votos(matriz, campos):
 
     # remove linha e coluna de marcação
     matriz = np.delete(matriz, (0), axis=0)
@@ -300,21 +278,19 @@ def imprime_votos2(matriz, campos, cargos):
 
         i += 1
 
-    # print(check)
-    # Layout da boleta ---> [('2', 'Governador'), ('2', 'Presidente'), ('5', 'Deputado')]
-    # Cargos ---> ['Governador', 'Presidente', 'Deputado']
-    # Linhas ---> 9
-    # Campos ---> [2, 4, 9]
-
     i, cargo_atual = 0, 0
-    votos = [''] * len(cargos)
+    votos = [''] * len(campos)
 
     # Se foram identificadas 2 ou mais marcações na mesma linha dos campos, o voto é "descartado"
-    while i < len(check) and cargo_atual < len(cargos):
+    while i < len(check) and cargo_atual < len(campos):
 
         # Enquanto estiver nos campos do cargo atual
         if i < campos[cargo_atual] and check[i][0] == 1:
             votos[cargo_atual] += str(int(check[i][1]))
+
+            # Correção para o erro de impressão em certas marcações de votos
+            if i == campos[cargo_atual] - 1:
+                cargo_atual += 1
 
         elif i < campos[cargo_atual] and check[i][0] != 1:
             votos[cargo_atual] = ''
@@ -332,7 +308,9 @@ def imprime_votos2(matriz, campos, cargos):
 if __name__ == '__main__':
     # TODO: Adicionar verificação de existencia de arquivo
     #boleta = cv.imread(os.getcwd() + '/Examples/GenerateVideo/boletaVoto.jpg')
-    boleta = cv.imread(os.getcwd() + '/Novas Boletas/teste.jpg')
+    boleta = cv.imread(os.getcwd() + '/Novas Boletas/teste1.jpg')
 
     # TODO: Mudar print para imprimir resultado
-    run2(boleta)
+    # 1 ---> Presidencial
+    # 0 ---> Municipal
+    run2(boleta, tipo = 1)
