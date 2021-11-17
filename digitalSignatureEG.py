@@ -1,13 +1,19 @@
 from Cryptodome.Random import random
+from Cryptodome.Hash import SHA256
 from Cryptodome.Util import number
+from pyzbar.pyzbar import decode
 from datetime import datetime
+import cv2 as cv
 import qrcode
 import os
 
 
 now = datetime.now()
-out_file_name = 'QRCode_DS_EG_' + (str(now.date()) + '_' + str(now.hour) + '_' +
+out_qr_name = 'QRCode_DS_EG_' + (str(now.date()) + '_' + str(now.hour) + '_' +
                                    str(now.minute) + '_' + str(now.second) + '.jpg')
+out_img_name = 'Boleta_Assinada_' + (str(now.date()) + '_' + str(now.hour) + '_' +
+                                   str(now.minute) + '_' + str(now.second) + '.jpg')
+boletas = '/Novas Boletas/'
 saida = '/Assinaturas/'
 if not os.path.isdir(os.getcwd() + saida):
     os.mkdir(os.getcwd() + saida)
@@ -53,7 +59,7 @@ def keys_generator(p, q, g):
     return private_key, public_key
 
 
-def EG_Sign(cod, p, q, private_key):
+def sign_elgamal(cod, p, q, private_key):
 
     # Geração da chave efêmera e sua inversa
     ephemeral_key = random.randint(1, q - 1)
@@ -66,7 +72,7 @@ def EG_Sign(cod, p, q, private_key):
     return s1, s2
 
 
-def EG_Verify(s1, s2, public_key, p, g, cod):
+def verify_elgamal(s1, s2, public_key, p, g, cod):
 
     r = pow(pow(public_key, s1) * pow(s1, s2), 1, p)
 
@@ -77,7 +83,7 @@ def EG_Verify(s1, s2, public_key, p, g, cod):
         return False
 
 
-def EG_Encrypt(g, q, p, public_key, cod):
+def encrypt_elgamal(g, q, p, public_key, cod):
 
     ephemeral_key = random.randint(1, q - 1)
 
@@ -88,12 +94,53 @@ def EG_Encrypt(g, q, p, public_key, cod):
     return c1, c2
 
 
-def EG_Decrypt(c1, c2, private_key, p):
-
-    d = pow(pow(c1, -private_key) * c2, 1, p)
+def decrypt_elgamal(c1, c2, private_key, p):
 
     # Mensagem codificada decriptada
-    return d
+    msg = pow(pow(c1, -private_key) * c2, 1, p)
+    return msg
+
+
+def place_QRCode(img, qrc, tipo):
+
+    if tipo:
+
+        # Redimensiona a imagem
+        res = cv.resize(qrc, dsize = (100, 140), interpolation = cv.INTER_CUBIC)
+        height, width = res.shape[:2]
+
+        # Cola o QRCode na boleta
+        img[380 : 380 + height, 760 : 760 + width] = res
+
+        # Salva as alterações
+        cv.imwrite(os.getcwd() + boletas + out_img_name, img)
+
+    else: 
+
+        res = cv.resize(qrc, dsize = (100, 140), interpolation = cv.INTER_CUBIC)
+        height, width = res.shape[:2]
+
+        img[320 : 320 + height, 760 : 760 + width] = res
+
+        cv.imwrite(os.getcwd() + boletas + out_img_name, img)
+
+    return img
+
+
+
+def read_QRCode(img, tipo):
+    
+    # Recorta o QRCode na boleta
+    if tipo:    
+        qr_code = img[395 : 505, 770 : 850]
+    else:
+        qr_code = img[335 : 445, 770 : 850]
+
+    info = decode(qr_code)
+    for i in info:
+        signature = i.data.decode("utf-8")
+    
+    return signature
 
 
 if __name__ == '__main__':
@@ -108,14 +155,27 @@ if __name__ == '__main__':
 
     # Codifica a boleta como um número pertencente a Fp escolhido de forma aleatória
     boleta_codificada = codifica_msg(p)
+    # resumo = SHA256.new(bytes(boleta_codificada))
 
     # Gera a assinatura digital El Gamal da boleta e seu QR Code correspondente
-    s1, s2 = EG_Sign(boleta_codificada, p, q, private_key)
-    assinatura = (s1, s2)
+    s1, s2 = sign_elgamal(boleta_codificada, p, q, private_key)
+    signed = (s1, s2)
+    print('Par da assinatura: ', signed)
 
     # Gera o QR Code da assinatura digital realizada
-    img = qrcode.make(assinatura)
-    img.save(os.getcwd() + saida + out_file_name)
+    qrc = qrcode.make(signed)
+    qrc.save(os.getcwd() + saida + out_qr_name)
 
+    # Obtém a boleta e seu QR Code contendo a assinatura correspondente
+    qr_code = cv.imread(os.getcwd() + saida + out_qr_name)
+    boleta = cv.imread(os.getcwd() + boletas + 'teste1.jpg')
+    
+    # Insere o QR Code na boleta e realiza sua leitura para obter a assinatura
+    boleta_assinada = place_QRCode(boleta, qr_code, tipo = 1)
+    signature = read_QRCode(boleta_assinada, tipo = 1)
+    print('Par da assinatura lida do QR Code: ', signature)
+    
     # TODO: Verificação da assinatura digital na boleta
-    verify = EG_Verify(s1, s2, public_key, p, g, boleta_codificada)
+    # Converter a string em um par de inteiros para realizar a algoritmo de verificação
+    verify = verify_elgamal(s1, s2, public_key, p, g, boleta_codificada)
+    print('Status da verificação: ', verify)
