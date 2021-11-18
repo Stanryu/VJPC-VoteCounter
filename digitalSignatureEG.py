@@ -127,7 +127,6 @@ def place_QRCode(img, qrc, tipo):
     return img
 
 
-
 def read_QRCode(img, tipo):
     
     # Recorta o QRCode na boleta
@@ -154,8 +153,11 @@ if __name__ == '__main__':
     private_key, public_key = keys_generator(p, q, g)
 
     # Codifica a boleta como um número pertencente a Fp escolhido de forma aleatória
-    boleta_codificada = codifica_msg(p)
-    # resumo = SHA256.new(bytes(boleta_codificada))
+    boleta = codifica_msg(p)
+
+    # Obtém o hash criptográfico da codificação da boleta
+    resumo = SHA256.new(bytes(boleta))
+    boleta_codificada = int(resumo.hexdigest(), 16)
 
     # Gera a assinatura digital El Gamal da boleta e seu QR Code correspondente
     s1, s2 = sign_elgamal(boleta_codificada, p, q, private_key)
