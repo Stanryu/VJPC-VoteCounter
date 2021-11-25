@@ -74,13 +74,28 @@ def sign_elgamal(cod, p, q, private_key):
 
 def verify_elgamal(s1, s2, public_key, p, g, cod):
 
-    r = pow(pow(public_key, s1) * pow(s1, s2), 1, p)
+    r = pow(pow(public_key, s1, p) * pow(s1, s2, p), 1, p)
 
     # Verificação da assinatura
     if pow(g, cod, p) == r:
         return True
     else:
         return False
+
+
+def restore_sign_pair(signature):
+
+    sign_size = len(signature)
+
+    for i in range(sign_size):
+        if signature[i] == ',':
+            div = i
+            break
+
+    p1 = signature[1 : div]
+    p2 = signature[div + 2 : sign_size - 1]
+
+    return int(p1), int(p2)
 
 
 def encrypt_elgamal(g, q, p, public_key, cod):
@@ -101,41 +116,26 @@ def decrypt_elgamal(c1, c2, private_key, p):
     return msg
 
 
-def place_QRCode(img, qrc, tipo):
+def place_QRCode(img, qrc):
 
-    if tipo:
+    # Redimensiona a imagem
+    res = cv.resize(qrc, dsize = (120, 160), interpolation = cv.INTER_CUBIC)
+    height, width = res.shape[:2]
 
-        # Redimensiona a imagem
-        res = cv.resize(qrc, dsize = (100, 140), interpolation = cv.INTER_CUBIC)
-        height, width = res.shape[:2]
+    # Cola o QRCode na boleta
+    img[10 : 10 + height, 425 : 425 + width] = res
 
-        # Cola o QRCode na boleta
-        img[380 : 380 + height, 760 : 760 + width] = res
-
-        # Salva as alterações
-        cv.imwrite(os.getcwd() + boletas + out_img_name, img)
-
-    else: 
-
-        res = cv.resize(qrc, dsize = (100, 140), interpolation = cv.INTER_CUBIC)
-        height, width = res.shape[:2]
-
-        img[320 : 320 + height, 760 : 760 + width] = res
-
-        cv.imwrite(os.getcwd() + boletas + out_img_name, img)
+    # Salva as alterações
+    cv.imwrite(os.getcwd() + boletas + out_img_name, img)
 
     return img
 
 
-def read_QRCode(img, tipo):
-    
-    # Recorta o QRCode na boleta
-    if tipo:    
-        qr_code = img[395 : 505, 770 : 850]
-    else:
-        qr_code = img[335 : 445, 770 : 850]
-
+def read_QRCode(img):
+  
+    qr_code = img[5 : 160, 410 : 545]
     info = decode(qr_code)
+
     for i in info:
         signature = i.data.decode("utf-8")
     
@@ -145,7 +145,7 @@ def read_QRCode(img, tipo):
 if __name__ == '__main__':
 
     # Gera os números primos e a base g de ordem q em Fp
-    n = 16                          # Mínimo ---> 2048 bits
+    n = 256                       # Mínimo ---> 2048 bits
     p, q = primes_generator(n)
     g = base_g(p, q)
 
@@ -153,16 +153,16 @@ if __name__ == '__main__':
     private_key, public_key = keys_generator(p, q, g)
 
     # Codifica a boleta como um número pertencente a Fp escolhido de forma aleatória
-    boleta = codifica_msg(p)
+    boleta = str(codifica_msg(p))
 
     # Obtém o hash criptográfico da codificação da boleta
-    resumo = SHA256.new(bytes(boleta))
+    resumo = SHA256.new(bytes(boleta, 'utf-8'))
     boleta_codificada = int(resumo.hexdigest(), 16)
 
     # Gera a assinatura digital El Gamal da boleta e seu QR Code correspondente
     s1, s2 = sign_elgamal(boleta_codificada, p, q, private_key)
     signed = (s1, s2)
-    print('Par da assinatura: ', signed)
+    print('\nPar da assinatura: ', signed)
 
     # Gera o QR Code da assinatura digital realizada
     qrc = qrcode.make(signed)
@@ -170,14 +170,14 @@ if __name__ == '__main__':
 
     # Obtém a boleta e seu QR Code contendo a assinatura correspondente
     qr_code = cv.imread(os.getcwd() + saida + out_qr_name)
-    boleta = cv.imread(os.getcwd() + boletas + 'teste1.jpg')
+    boleta = cv.imread(os.getcwd() + boletas + 'teste4.jpg')
     
     # Insere o QR Code na boleta e realiza sua leitura para obter a assinatura
-    boleta_assinada = place_QRCode(boleta, qr_code, tipo = 1)
-    signature = read_QRCode(boleta_assinada, tipo = 1)
-    print('Par da assinatura lida do QR Code: ', signature)
+    boleta_assinada = place_QRCode(boleta, qr_code)
+    signature = read_QRCode(boleta_assinada)
+    print('\nPar da assinatura lida do QR Code: ', signature)
     
-    # TODO: Verificação da assinatura digital na boleta
-    # Converter a string em um par de inteiros para realizar a algoritmo de verificação
-    verify = verify_elgamal(s1, s2, public_key, p, g, boleta_codificada)
-    print('Status da verificação: ', verify)
+    # Executa o algoritmo de verificação para a assinatura lida do QR Code
+    p1, p2 = restore_sign_pair(signature)
+    verify = verify_elgamal(p1, p2, public_key, p, g, boleta_codificada)
+    print('\nStatus da verificação: ', verify)
