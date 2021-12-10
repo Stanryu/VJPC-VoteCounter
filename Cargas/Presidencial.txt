@@ -1,0 +1,5 @@
+5 Deputado Estadual
+4 Deputado Federal
+3 Senador
+2 Governador
+2 Presidente da Republica
