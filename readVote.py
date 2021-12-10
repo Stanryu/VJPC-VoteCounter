@@ -30,7 +30,7 @@ def recorta(boleta, tipo):
     copia_boleta = boleta.copy()
     quadradosBoleta, copia_boleta = identificaMarcacoes(copia_boleta, tam_pincel)
 
-    # mostrar('boleta full', copia_boleta)
+    # mostrar('boleta', copia_boleta)
 
     # Obtém as marcações do cabeçalho
     quadradosBoleta.sort(key = lambda q : q.y)
@@ -165,7 +165,15 @@ def removerMarcacoesIniciais(posicaoQuadrados, menor_x, maior_x, tamanho_marcado
     return result, linhas, colunas
 
 
-def run2(boleta, tipo):
+def run2(boleta, campos):
+
+    mostrar('boleta', boleta)
+
+    # Define o tipo de layout da boleta
+    if campos == [5, 9, 12, 14, 16]:
+        tipo = 1
+    elif campos == [5, 7]:
+        tipo = 0
 
     # Recorte da área de votação
     boleta = recorta(boleta, tipo)
@@ -206,17 +214,11 @@ def run2(boleta, tipo):
 
     mostrar('Vote', boleta)
 
-    # Define as transições dos campos de votos de acordo com o tipo de boleta
-    if tipo:
-        campos = [5, 9, 12, 14, 16]
-    else:
-        campos = [5, 7]
-
     matriz = construct_matrix(result, positionLines, positionColumns)
     votos = imprime_votos(matriz, campos)
-    
-    print(votos)
-    mostrar('Vote', boleta)
+
+    tupla_cargos = tuple(votos)    
+    return tupla_cargos
 
 
 def construct_matrix(votes, positionLines, positionColumns):
@@ -244,7 +246,7 @@ def imprime_votos(matriz, campos):
     # remove linha e coluna de marcação
     matriz = np.delete(matriz, (0), axis=0)
     matriz = np.delete(matriz, (0), axis=1)
-    print(matriz)
+    # print(matriz)
 
     # Matriz para checagem da ocorrência de dígitos por linha
     check = np.zeros((len(matriz), 2))
@@ -307,10 +309,13 @@ def imprime_votos(matriz, campos):
 
 if __name__ == '__main__':
     # TODO: Adicionar verificação de existencia de arquivo
-    #boleta = cv.imread(os.getcwd() + '/Examples/GenerateVideo/boletaVoto.jpg')
-    boleta = cv.imread(os.getcwd() + '/Novas Boletas/teste1.jpg')
+    # Assinada digitalmente com o El Gamal 1024 bits
+    boleta = cv.imread(os.getcwd() + '/Novas Boletas/Boleta_Assinada_2021-12-03_12_16_30.jpg')
 
     # TODO: Mudar print para imprimir resultado
     # 1 ---> Presidencial
     # 0 ---> Municipal
-    run2(boleta, tipo = 1)
+
+    campos = [5, 9, 12, 14, 16]
+    # campos = [5, 7]
+    run2(boleta, campos)
