@@ -2,6 +2,7 @@
 import os
 from datetime import datetime
 import cv2 as cv
+import electionConfiguration
 import readVote
 import imprimeResultado
 
@@ -12,8 +13,6 @@ nFrames = 30
 now = datetime.now()
 out_file_name = 'Totalizacao--Zona_' + zona + '-Secao_' + secao + '-Data' + (str(now.date()) + '_' + str(now.hour)+'-' +
                                                                              str(now.minute)+'-'+str(now.second) + '.avi')
-# out_file_name = 'saida1.avi'
-
 
 # Formato do vídeo (Avi)
 fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
@@ -36,9 +35,14 @@ if not os.path.isdir(os.getcwd() + saida):
 # Cria escritor de vídeo com base nas configurações identificadas
 out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (width, height))
 
+# Executa a configuração da eleição
+config_file, qtd_cargos = electionConfiguration.configElection()
+cargos, linhas, campos = electionConfiguration.readConfigFile(config_file, qtd_cargos)
+
 # Inicializa mapas de votação
-totalVotosPresidente = {}
-totalVotosDeputado = {}
+votos = list()
+for i in range(qtd_cargos):
+    votos.append({})
 
 # Identifica cada voto e contabiliza no mapa de votação
 for boleta in boletas:
@@ -48,20 +52,20 @@ for boleta in boletas:
     out.write(img)
 
     # Lê os votos da boleta atual
-    presidente, deputado = readVote.run2(img)
+    tupla_votos = readVote.run2(img, campos)
 
     # Contabiliza os votos da boleta
-    totalVotosPresidente[presidente] = totalVotosPresidente[presidente] + \
-        1 if presidente in totalVotosPresidente else 1
-    totalVotosDeputado[deputado] = totalVotosDeputado[deputado] + \
-        1 if deputado in totalVotosDeputado else 1
+    for i in range(qtd_cargos):
+        key = tupla_votos[i]
+        votos[i][key] = votos[i][key] + \
+            1 if key in votos[i] else 1
 
 # Fecha janelas e finaliza escritor
 cv.destroyAllWindows()
 out.release()
 
 # Imprime resultado
-imprimeResultado.run(totalVotosPresidente, 'Presidente')
-imprimeResultado.run(totalVotosDeputado, 'Deputado')
+for i in range(qtd_cargos):
+    imprimeResultado.run(votos[i], cargos[i])
 
 # TODO: Adicionar validação da contagem pelo vídeo com o número de boletas na urna física.

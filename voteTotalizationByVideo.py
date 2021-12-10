@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import readVote
 import imprimeResultado
+import electionConfiguration
 
 # Diretório dos vídeos
 saida = '/Output/'
@@ -16,8 +17,14 @@ if not os.path.isdir(os.getcwd() + saida):
 cap = cv.VideoCapture(os.getcwd() + saida +
     'Totalizacao--Zona_256-Secao_1-Data2021-10-13_20-46-30.avi')
 
-totalVotosPresidente = {}
-totalVotosDeputado = {}
+# Executa a configuração da eleição
+config, qtd_cargos = electionConfiguration.configElection()
+cargos, linhas, campos = electionConfiguration.readConfigFile(config, qtd_cargos)
+
+# Inicializa mapas de votação
+votos = list()
+for i in range(qtd_cargos):
+    votos.append({})
 
 while(cap.isOpened()):
     ret, img = cap.read()
@@ -25,12 +32,15 @@ while(cap.isOpened()):
     if(ret):
         # cv.imshow('frame',img)
         # cv.waitKey(0)
-        presidente, deputado = readVote.run2(img)
 
-        totalVotosPresidente[presidente] = totalVotosPresidente[presidente] + \
-            1 if presidente in totalVotosPresidente else 1
-        totalVotosDeputado[deputado] = totalVotosDeputado[deputado] + \
-            1 if deputado in totalVotosDeputado else 1
+        # Lê os votos da boleta atual
+        tupla_votos = readVote.run2(img)
+
+        # Contabiliza os votos da boleta
+        for i in range(qtd_cargos):
+            key = tupla_votos[i]
+            votos[i][key] = votos[i][key] + \
+                1 if key in votos[i] else 1
         # if cv.waitKey(0) & 0xFF == ord('q'):
             #break
     else:
@@ -39,5 +49,5 @@ while(cap.isOpened()):
 cap.release()
 cv.destroyAllWindows()
 
-imprimeResultado.run(totalVotosPresidente, 'Presidente')
-imprimeResultado.run(totalVotosDeputado, 'Deputado')
+for i in range(qtd_cargos):
+    imprimeResultado.run(votos[i], cargos[i])
