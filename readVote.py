@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import cv2 as cv
 import numpy as np
-import sys
 import os
 from quadrilateral import quadrilateral
 
@@ -310,12 +309,13 @@ def imprime_votos(matriz, campos):
 if __name__ == '__main__':
     # TODO: Adicionar verificação de existencia de arquivo
     # Assinada digitalmente com o El Gamal 1024 bits
-    boleta = cv.imread(os.getcwd() + '/Novas Boletas/Boleta_Assinada_2021-12-03_12_16_30.jpg')
+    boleta = cv.imread(os.getcwd() + '/Static/Novas Boletas/Boleta_Assinada_2021-12-03_12_16_30.jpg')
 
     # TODO: Mudar print para imprimir resultado
-    # 1 ---> Presidencial
-    # 0 ---> Municipal
 
     campos = [5, 9, 12, 14, 16]
     # campos = [5, 7]
-    run2(boleta, campos)
+    
+    test = run2(boleta, campos)
+    print(test)
+

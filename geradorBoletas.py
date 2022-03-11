@@ -15,13 +15,20 @@ fonte = cv.FONT_HERSHEY_DUPLEX
 escala, grossura = 1, 2
 
 now = datetime.now()
-logos = '/Logotipos/'
-templates = '/Templates/'
-componentes = '/Components/'
 out_logo_name = 'Boleta_Personalizada_' + (str(now.date()) + '_' + str(now.hour) + '_' +
                                             str(now.minute) + '_' + str(now.second) + '.jpg')
 out_cargos_name = 'Boleta_Configurada_' + (str(now.date()) + '_' + str(now.hour) + '_' +
                                             str(now.minute) + '_' + str(now.second) + '.jpg')
+
+stat = '/Static'
+logos = '/Logotipos/'
+templates = '/Templates/'
+componentes = '/Components/'
+
+if not os.path.isdir(os.getcwd() + stat):
+    os.mkdir(os.getcwd() + stat)
+if not os.path.isdir(os.getcwd() + stat + templates):
+    os.mkdir(os.getcwd() + stat + templates)
 
 
 def geraBoleta(qtd_cargos, cargos):
@@ -76,20 +83,20 @@ def geraBoleta(qtd_cargos, cargos):
     # cv.waitKey(0)
     
     # Salva e retorna a boleta com os campos de votos e nomes de cargos inseridos
-    cv.imwrite(os.getcwd() + templates + out_cargos_name, boleta)
+    cv.imwrite(os.getcwd() + stat + templates + out_cargos_name, boleta)
     return boleta
 
 
 def adicionaLogo(boleta):
 
-    logo = cv.imread(os.getcwd() + logos + 'logo_2.jpg')
+    logo = cv.imread(os.getcwd() + stat + logos + 'logo_2.jpg')
     
     # Redimensiona o logotipo para acomodar o código de barras e QR Code posteriormente
     res = cv.resize(logo, dsize = (620, 160), interpolation = cv.INTER_CUBIC)
     boleta[175 : 175 + res.shape[0], 80 : 80 + res.shape[1]] = res
 
     # Salva as alterações
-    cv.imwrite(os.getcwd() + logos + out_logo_name, boleta)
+    cv.imwrite(os.getcwd() + stat + logos + out_logo_name, boleta)
 
 
 if __name__ == '__main__':

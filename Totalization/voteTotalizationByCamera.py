@@ -17,20 +17,23 @@ camera_port = 0
 nFrames = 30.0
 emLoop = True
 
-# Diretório dos vídeos
-saida = '/Output/'
-
 camera = cv.VideoCapture(camera_port)
 fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 now = datetime.now()
 out_file_name = (str(now.date()) + '_' + str(now.hour)+'-'+str(now.minute) +
          '-' + str(now.second) + '_' + zona + '_' + secao + '.avi')
 
-# O diretótio '/Output/' é criado caso não exista
-if not os.path.isdir(os.getcwd() + saida):
-    os.mkdir(os.getcwd() + saida)
+# Diretórios
+ver = '/v1.0'
+saida = '/Output/'
+
+# O diretótio '/Output/' e '/v1.0/ são criados caso não existam
+if not os.path.isdir(os.getcwd() + ver):
+    os.mkdir(os.getcwd() + ver)
+if not os.path.isdir(os.getcwd() + ver + saida):
+    os.mkdir(os.getcwd() + ver + saida)
     
-out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (640, 480))
+out = cv.VideoWriter(os.getcwd() + ver + saida + out_file_name, fourcc, nFrames, (640, 480))
 
 if not camera.isOpened():
     print('Nao foi possivel abrir a web cam.')

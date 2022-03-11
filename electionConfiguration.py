@@ -1,13 +1,19 @@
 import os
 from datetime import datetime
 
-# Diretório
-saida = '/Cargas/'
 
-# Nome dos arquivos de configuração da eleição
 now = datetime.now()
 out_file_name = 'Configuracao da Eleicao' + ' - Data ' + (str(now.date()) + ' ' + str(now.hour) + '_' +
                                                         str(now.minute) + '_' + str(now.second) + '.txt')
+
+stat = '/Static'
+saida = '/Cargas/'
+
+if not os.path.isdir(os.getcwd() + stat):
+        os.mkdir(os.getcwd() + stat)
+if not os.path.isdir(os.getcwd() + stat + saida):
+        os.mkdir(os.getcwd() + stat + saida)
+
 
 def configElection():
     
@@ -44,12 +50,8 @@ def configElection():
 
     cargos.sort()
 
-    # O diretótio '/Cargas/' é criado caso não exista
-    if not os.path.isdir(os.getcwd() + saida):
-        os.mkdir(os.getcwd() + saida)
-
     # Gera o arquivo de configuração da eleição no diretório destino
-    with open(os.getcwd() + saida + out_file_name, 'w') as arquivo:
+    with open(os.getcwd() + stat + saida + out_file_name, 'w') as arquivo:
         for item in cargos:
             arquivo.write(str(item[2]) + ' ' + str(item[1]) + '\n')
 
@@ -58,17 +60,15 @@ def configElection():
 
 def readConfigFile(file_name, qtd_cargos):
 
-    #layout_boleta = []
     cargos, campos = [], []
     linhas = 0
 
-    with open(os.getcwd() + saida + file_name, 'r') as arquivo:
+    with open(os.getcwd() + stat + saida + file_name, 'r') as arquivo:
         info = arquivo.readlines()
         info = [x.strip() for x in info]
 
     for i in range(qtd_cargos):
         
-        #layout_boleta.append((info[i][:1], info[i][2:]))
         cargos.append(info[i][2:])
         linhas += int(info[i][:1])
 
@@ -77,7 +77,6 @@ def readConfigFile(file_name, qtd_cargos):
         else:
             campos.append(campos[i - 1] + int(info[i][:1]))
 
-    # print(layout_boleta)
     return cargos, linhas, campos
 
     

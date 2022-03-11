@@ -18,13 +18,18 @@ out_img_name1 = 'Boleta_Identificada_' + (str(now.date()) + '_' + str(now.hour) 
                                    str(now.minute) + '_' + str(now.second) + '.jpg')
 out_img_name2 = 'Boleta_Assinada_' + (str(now.date()) + '_' + str(now.hour) + '_' +
                                    str(now.minute) + '_' + str(now.second) + '.jpg')
+
+stat = '/Static'
 boletas = '/Novas Boletas/'
 codes = '/Assinaturas/'
 bar = '/Barras/'
-if not os.path.isdir(os.getcwd() + codes):
-    os.mkdir(os.getcwd() + codes)
-if not os.path.isdir(os.getcwd() + bar):
-    os.mkdir(os.getcwd() + bar)
+
+if not os.path.isdir(os.getcwd() + stat):
+    os.mkdir(os.getcwd() + stat)
+if not os.path.isdir(os.getcwd() + stat + codes):
+    os.mkdir(os.getcwd() + stat + codes)
+if not os.path.isdir(os.getcwd() + stat + bar):
+    os.mkdir(os.getcwd() + stat + bar)
 
 
 def codifica_msg(p):
@@ -138,7 +143,7 @@ def place_barcode(img, codigo_barra):
     img[80 : 80 + height, 50 : 50 + width] = res
 
     # Salva as alterações
-    cv.imwrite(os.getcwd() + boletas + out_img_name1, img)
+    cv.imwrite(os.getcwd() + stat + boletas + out_img_name1, img)
 
     return img
 
@@ -166,7 +171,7 @@ def place_QRCode(img, qrc):
     img[175 : 175 + height, 760 : 760 + width] = res
 
     # Salva as alterações
-    cv.imwrite(os.getcwd() + boletas + out_img_name2, img)
+    cv.imwrite(os.getcwd() + stat + boletas + out_img_name2, img)
 
     return img
 
@@ -199,11 +204,11 @@ if __name__ == '__main__':
     max = pow(10, 12) - 1
     numero = random.randint(min, max)
     c_bar = EAN13(str(numero), writer = ImageWriter())
-    c_bar.save(os.getcwd() + bar + out_bar_name)
+    c_bar.save(os.getcwd() + stat + bar + out_bar_name)
 
     # Obtém a boleta e seu código de barras identificador correspondente
-    boleta = cv.imread(os.getcwd() + boletas + 'teste1.jpg')
-    codigo_barra = cv.imread(os.getcwd() + bar + out_bar_name + '.png')
+    boleta = cv.imread(os.getcwd() + stat + boletas + 'teste1.jpg')
+    codigo_barra = cv.imread(os.getcwd() + stat + bar + out_bar_name + '.png')
 
     # Insere o código de barras na boleta e realiza sua leitura para obter o nº de série
     boleta_id = place_barcode(boleta, codigo_barra)
@@ -216,11 +221,11 @@ if __name__ == '__main__':
 
     # Gera o QR Code da assinatura digital realizada
     qrc = qrcode.make(signed)
-    qrc.save(os.getcwd() + codes + out_qr_name)
+    qrc.save(os.getcwd() + stat + codes + out_qr_name)
 
     # Obtém a boleta identificada com o nº de série e seu QR Code contendo a assinatura correspondente
-    boleta_barcode = cv.imread(os.getcwd() + boletas + out_img_name1)
-    qr_code = cv.imread(os.getcwd() + codes + out_qr_name)
+    boleta_barcode = cv.imread(os.getcwd() + stat + boletas + out_img_name1)
+    qr_code = cv.imread(os.getcwd() + stat + codes + out_qr_name)
     
     # Insere o QR Code na boleta e realiza sua leitura para obter a assinatura
     boleta_assinada = place_QRCode(boleta_barcode, qr_code)

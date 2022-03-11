@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 import os
+import cv2 as cv
+
+import sys
+sys.path.append('.')
+import electionConfiguration
 import readVote
 import imprimeResultado
-import electionConfiguration
-import cv2 as cv
 
 # Executa a configuração da eleição
 config, qtd_cargos = electionConfiguration.configElection()
 cargos, linhas, campos = electionConfiguration.readConfigFile(config, qtd_cargos)
 
+# Diretórios
+ver = '/v1.0'
 urna = '/UrnaFisica/'
-boletas = os.listdir(os.getcwd() + urna)
+boletas = os.listdir(os.getcwd() + ver + urna)
 
 # Inicializa mapas de votação
 votos = list()
@@ -19,7 +24,7 @@ for i in range(qtd_cargos):
 
 for boleta in boletas:
     
-    img = cv.imread(os.getcwd() + urna + boleta)
+    img = cv.imread(os.getcwd() + ver + urna + boleta)
 
     # Lê os votos da boleta atual
     tupla_votos = readVote.run2(img, campos)

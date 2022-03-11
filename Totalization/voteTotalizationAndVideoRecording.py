@@ -2,6 +2,9 @@
 import os
 from datetime import datetime
 import cv2 as cv
+
+import sys
+sys.path.append('.')
 import electionConfiguration
 import readVote
 import imprimeResultado
@@ -18,22 +21,25 @@ out_file_name = 'Totalizacao--Zona_' + zona + '-Secao_' + secao + '-Data' + (str
 fourcc = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
 # Diretórios
+ver = '/v1.0'
 urna = '/UrnaFisica/'
 saida = '/Output/'
 
+# O diretótio '/Output/' e '/v1.0/ são criados caso não existam
+if not os.path.isdir(os.getcwd() + ver):
+    os.mkdir(os.getcwd() + ver)
+if not os.path.isdir(os.getcwd() + ver + saida):
+    os.mkdir(os.getcwd() + ver + saida)
+
 # Lista de nomes dos arquivos (boletas)
-boletas = os.listdir(os.getcwd() + urna)
+boletas = os.listdir(os.getcwd() + ver + urna)
 
 # Identifica tamanhos das imagens
-img = cv.imread(os.getcwd() + urna + boletas[0])
+img = cv.imread(os.getcwd() + ver + urna + boletas[0])
 height, width, layers = img.shape
 
-# O diretótio '/Output/' é criado caso não exista
-if not os.path.isdir(os.getcwd() + saida):
-    os.mkdir(os.getcwd() + saida)
-
 # Cria escritor de vídeo com base nas configurações identificadas
-out = cv.VideoWriter(os.getcwd() + saida + out_file_name, fourcc, nFrames, (width, height))
+out = cv.VideoWriter(os.getcwd() + ver + saida + out_file_name, fourcc, nFrames, (width, height))
 
 # Executa a configuração da eleição
 config_file, qtd_cargos = electionConfiguration.configElection()
@@ -48,7 +54,7 @@ for i in range(qtd_cargos):
 for boleta in boletas:
 
     # Adiciona a imagem da boleta em um frame do vídeo
-    img = cv.imread(os.getcwd() + urna + boleta)
+    img = cv.imread(os.getcwd() + ver + urna + boleta)
     out.write(img)
 
     # Lê os votos da boleta atual

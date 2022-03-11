@@ -2,19 +2,25 @@
 import cv2 as cv
 from datetime import datetime
 import os
+
+import sys
+sys.path.append('.')
+import electionConfiguration
 import readVote
 import imprimeResultado
-import electionConfiguration
 
-# Diretório dos vídeos
+# Diretórios
+ver = '/v1.0'
 saida = '/Output/'
 
-# O diretótio '/Output/' é criado caso não exista
-if not os.path.isdir(os.getcwd() + saida):
-    os.mkdir(os.getcwd() + saida)
+# O diretótio '/Output/' e '/v1.0/ são criados caso não existam
+if not os.path.isdir(os.getcwd() + ver):
+    os.mkdir(os.getcwd() + ver)
+if not os.path.isdir(os.getcwd() + ver + saida):
+    os.mkdir(os.getcwd() + ver + saida)
 
 # TODO: Adicionar verificação de existencia de arquivo
-cap = cv.VideoCapture(os.getcwd() + saida +
+cap = cv.VideoCapture(os.getcwd() + ver + saida +
     'Totalizacao--Zona_256-Secao_1-Data2021-10-13_20-46-30.avi')
 
 # Executa a configuração da eleição
@@ -34,7 +40,7 @@ while(cap.isOpened()):
         # cv.waitKey(0)
 
         # Lê os votos da boleta atual
-        tupla_votos = readVote.run2(img)
+        tupla_votos = readVote.run2(img, campos)
 
         # Contabiliza os votos da boleta
         for i in range(qtd_cargos):
