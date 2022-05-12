@@ -14,10 +14,12 @@ def mostrar(titulo, imagem):
     cv.waitKey(0)
 
 
-def recorta(boleta, tipo):
+def recorta(boleta):
 
-    quadradosBoleta, cabecalho, rodape = list(), list(), list()
+    tolerancia = 10
     erro_marcacao = 40
+
+    quadradosBoleta, cabecalho, rodape, marcaçao_atual = list(), list(), list(), list()
 
     # Dimensões da boleta e tamanho do pincel
     height = boleta.shape[0]
@@ -26,40 +28,33 @@ def recorta(boleta, tipo):
         tam_pincel += 1
 
     # Identificação dos quadrados na boleta completa
-    copia_boleta = boleta.copy()
-    quadradosBoleta, copia_boleta = identificaMarcacoes(copia_boleta, tam_pincel)
-
-    # mostrar('boleta', copia_boleta)
+    quadradosBoleta, _ = identificaMarcacoes(boleta.copy(), tam_pincel)
 
     # Obtém as marcações do cabeçalho
     quadradosBoleta.sort(key = lambda q : q.y)
     cabecalho.append(quadradosBoleta.pop(0))
     cabecalho.append(quadradosBoleta.pop(0))
+    cabecalho.sort(key = lambda q : q.x)
+
+    # Obtém o marcador de cabeçalho mais a esquerda
+    eixo_x = cabecalho[0].x
+    marcaçao_atual.append(cabecalho[1])
+    
+    # Busca pela próxima marcação no mesmo eixo x do cabeçalho (logo abaixo dele)
+    while marcaçao_atual[0].x > (eixo_x + tolerancia) or marcaçao_atual[0].x < (eixo_x - tolerancia):     
+            marcaçao_atual.pop(0)
+            marcaçao_atual.append(quadradosBoleta.pop(0))
 
     # Obtém as marcações do rodapé
     quadradosBoleta.sort(key = lambda q : q.y, reverse = True)
     rodape.append(quadradosBoleta.pop(0))
     rodape.append(quadradosBoleta.pop(0))
-
-    cabecalho.sort(key = lambda q : q.x)
     rodape.sort(key = lambda q : q.x)
-
-    # print(rodape)
-    # print(cabecalho)
 
     # Obtém as coordenadas x e y para recortar a área de votos
     corte_x = rodape[1].x + erro_marcacao
-    dist = int(round(rodape[0].y - cabecalho[0].y))
-
-    # O corte no eixo y é feito de acordo com a proporção que cabeçalho ocupa em cada layout de boleta
-    if tipo:
-        corte_y = int(round(dist * 0.33))
-    else:
-        corte_y = int(round(dist * 0.5))
-
-    # print(corte_x)
-    # print(corte_y)
-
+    corte_y = marcaçao_atual[0].y
+    
     return boleta[corte_y : height, 0 : corte_x]
 
 
@@ -74,11 +69,11 @@ def identificaMarcacoes(img, tam_pincel):
     img_blur = cv.GaussianBlur(img_cinza, (tam_pincel, tam_pincel), 0)
 
     # Imagem em escala cinza borrada e binarizada
-    ret, img_binaria = cv.threshold(img_blur, 0, 255, 
+    _, img_binaria = cv.threshold(img_blur, 0, 255, 
                                     cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
 
     # Identificação de poligonos com 4 lados
-    contornos, hier = cv.findContours(img_binaria, 
+    contornos, _ = cv.findContours(img_binaria, 
                                     cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     for c in contornos:
@@ -168,14 +163,8 @@ def run2(boleta, campos):
 
     mostrar('boleta', boleta)
 
-    # Define o tipo de layout da boleta
-    if campos == [5, 9, 12, 14, 16]:
-        tipo = 1
-    elif campos == [5, 7]:
-        tipo = 0
-
     # Recorte da área de votação
-    boleta = recorta(boleta, tipo)
+    boleta = recorta(boleta)
 
     # print("shape: " + str(boleta.shape))
     posicaoQuadrados = list()
@@ -188,7 +177,7 @@ def run2(boleta, campos):
     posicaoQuadrados, boleta = identificaMarcacoes(boleta, tam_pincel)
 
     # mostrar('Boleta', boleta)
-
+    
     posicaoQuadrados.sort(key=lambda q: q.y, reverse=True)
 
     # Identifica os 2 marcadores do rodapé.
@@ -199,7 +188,6 @@ def run2(boleta, campos):
 
     menor_x = marcadoresDeRodape[0].x
     maior_x = marcadoresDeRodape[1].x
-    maior_y = marcadoresDeRodape[0].y
 
     tamanho_marcador = (marcadoresDeRodape[0].width + marcadoresDeRodape[1].width) / \
         2, (marcadoresDeRodape[0].height +
@@ -216,8 +204,8 @@ def run2(boleta, campos):
     matriz = construct_matrix(result, positionLines, positionColumns)
     votos = imprime_votos(matriz, campos)
 
-    tupla_cargos = tuple(votos)    
-    return tupla_cargos
+    tupla_votos = tuple(votos)    
+    return tupla_votos
 
 
 def construct_matrix(votes, positionLines, positionColumns):
@@ -307,15 +295,20 @@ def imprime_votos(matriz, campos):
 
 
 if __name__ == '__main__':
+    
     # TODO: Adicionar verificação de existencia de arquivo
+    
     # Assinada digitalmente com o El Gamal 1024 bits
-    boleta = cv.imread(os.getcwd() + '/Static/Novas Boletas/Boleta_Assinada_2021-12-03_12_16_30.jpg')
+    # boleta = cv.imread(os.getcwd() + '/Static/Novas Boletas/Boleta_Assinada_2021-12-03_12_16_30.jpg')
+    # campos = [5, 9, 12, 14, 16]
+
+    boleta = cv.imread(os.getcwd() + '/Static/Novas Boletas/Boleta_Assinada_2022-05-11_23_30_36.jpg')
+    campos = [5, 10, 15, 20, 25, 30]
+
+    # boleta = cv.imread(os.getcwd() + '/Static/Novas Boletas/teste4.jpg')
+    # campos = [5, 7]
 
     # TODO: Mudar print para imprimir resultado
-
-    campos = [5, 9, 12, 14, 16]
-    # campos = [5, 7]
     
     test = run2(boleta, campos)
     print(test)
-
