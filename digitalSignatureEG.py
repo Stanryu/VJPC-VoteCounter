@@ -1,9 +1,11 @@
 from barcode.writer import ImageWriter
 from Cryptodome.Random import random
+from Cryptodome.Hash import SHA256
 from Cryptodome.Util import number
 from pyzbar.pyzbar import decode
 from datetime import datetime
 from barcode import EAN13
+from readVote import run2
 import cv2 as cv
 import qrcode
 import os
@@ -207,16 +209,24 @@ if __name__ == '__main__':
     c_bar.save(os.getcwd() + stat + bar + out_bar_name)
 
     # Obtém a boleta e seu código de barras identificador correspondente
-    boleta = cv.imread(os.getcwd() + stat + boletas + 'teste1.jpg')
+    boleta = cv.imread(os.getcwd() + stat + '/Logotipos/teste.jpg')
     codigo_barra = cv.imread(os.getcwd() + stat + bar + out_bar_name + '.png')
 
     # Insere o código de barras na boleta e realiza sua leitura para obter o nº de série
     boleta_id = place_barcode(boleta, codigo_barra)
     n_serie = read_barcode(boleta_id)
+    
+    # Obtém a escolha de voto presente na boleta (tuple -> string -> bytes)
+    campos = [5, 10, 15, 20, 25, 30]
+    boleta_vote = bytearray(str(run2(boleta, campos)), encoding='utf-8')
 
-    # Gera a assinatura digital El Gamal da boleta
-    s1, s2 = sign_elgamal(n_serie, g, p, q, private_key)
-    signed = (n_serie, s1, s2)
+    # A escolha de voto é submetida à uma função Hash, para então ser combinada (somada) ao nº de série (bytes -> int)
+    vote_hash = SHA256.new(boleta_vote)
+    ballot_content = int.from_bytes(vote_hash.digest(), byteorder='big') + n_serie
+
+    # Gera a assinatura digital El Gamal do conteúdo da boleta
+    s1, s2 = sign_elgamal(ballot_content, g, p, q, private_key)
+    signed = (ballot_content, s1, s2)
     print('\nAssinatura: ', signed)
 
     # Gera o QR Code da assinatura digital realizada
