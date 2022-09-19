@@ -1,3 +1,5 @@
+from Cryptodome.Random import get_random_bytes
+from Cryptodome.PublicKey import ElGamal
 from barcode.writer import ImageWriter
 from Cryptodome.Random import random
 from Cryptodome.Hash import SHA256
@@ -34,44 +36,17 @@ if not os.path.isdir(os.getcwd() + stat + bar):
     os.mkdir(os.getcwd() + stat + bar)
 
 
-def codifica_msg(p):
+def keys_generator(n):
 
-    # Codifica a mensagem como um número pertencente a Fp escolhido de forma aleatória
-    mensagem = random.randint(1, p)
-    return mensagem
+    obj = ElGamal.generate(n, get_random_bytes)
 
+    prime_p = int(obj.__dict__['p'])
+    prime_q = int((prime_p - 1) >> 1)
+    generator = int(obj.__dict__['g'])
+    private_key = int(obj.__dict__['x'])
+    public_key = int(obj.__dict__['y'])
 
-def primes_generator(n):
-
-    q = number.getPrime(n)
-    p = (2 * q) + 1
-
-    # Geração dos números até que p e q sejam primos
-    while not number.isPrime(p):
-        q = number.getPrime(n)
-        p = (2 * q) + 1
-
-    return p, q
-
-
-def base_g(p, q):
-
-    g = random.randint(2, p - 1)
-
-    # Procura uma base g de ordem q em Fp
-    while (pow(g, 2, p) == 1) or (pow(g, q, p) != 1):
-        g = random.randint(2, p - 1)
-
-    return g
-
-
-def keys_generator(p, q, g):
-
-    # Geração da chave secreta e da chave pública
-    private_key = random.randint(2, q - 1)
-    public_key = pow(g, private_key, p)
-
-    return private_key, public_key
+    return prime_p, prime_q, generator, private_key, public_key
 
 
 def sign_elgamal(cod, g, p, q, private_key):
@@ -193,13 +168,11 @@ def read_QRCode(img):
 
 if __name__ == '__main__':
 
-    # Gera os números primos e a base g de ordem q em Fp
-    n = 256                      # Mínimo ---> 2048 bits
-    p, q = primes_generator(n)
-    g = base_g(p, q)
+    # Mínimo ---> n = 2048 bits
+    n = 512                      
 
-    # Obtém a chave secreta e a chave pública
-    private_key, public_key = keys_generator(p, q, g)
+    # Obtém os primos (p, q), o gerador, a chave secreta e a chave pública
+    p, q, g, private_key, public_key = keys_generator(n)
 
     # Criação do código de barras de 12 dígitos
     min = pow(10, 11)
