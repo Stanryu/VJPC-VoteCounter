@@ -107,6 +107,7 @@ def geraBoleta(qtd_cargos, cargo, digitos, posicoes):
         # Insere o campo de voto na boleta
 
         boleta[y_atual :y_atual + aux , 0 : width] = escrita
+        print(y_atual)
 
         # Incrementa a posição y para inserção em sequência dos campos de votos
         y_atual += aux + 40
@@ -135,7 +136,7 @@ if __name__ == '__main__':
 
     # Obtém do usuário a configuração de layout de boleta desejado
     config, qtd_cargos = electionConfiguration.configElection()
-    cargos, pos, digitos = electionConfiguration.readConfigFile(config, qtd_cargos)
+    cargos, pos, digitos = electionConfiguration.readConfigFile(config)
 
     # Gera a boleta com os cargos desejados e componentes essenciais para leitura
     boleta = geraBoleta(qtd_cargos, cargos, digitos, pos)

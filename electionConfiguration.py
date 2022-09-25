@@ -19,6 +19,7 @@ def configElection():
 
     while True:
         try:
+            nome_eleicao = str(input("Digite o nome da eleição:"))
             qtd_cargos = int(input("Digite a quantidade de cargos:"))
             break
         except ValueError:
@@ -47,16 +48,16 @@ def configElection():
         i = i + 1
 
     cargos.sort()
-
+    nomeEle = nome_eleicao+ ' - ' + out_file_name
     # Gera o arquivo de configuração da eleição no diretório destino
-    with open(os.getcwd() + stat + saida + out_file_name, 'w') as arquivo:
+    with open(os.getcwd() + stat + saida + nomeEle, 'w') as arquivo:
         for item in cargos:
             arquivo.write(str(item[1]) + ' ' + str(item[0]) + ' ' + str(item[2]) + '\n')
 
-    return out_file_name, qtd_cargos
+    return nomeEle, qtd_cargos
 
 
-def readConfigFile(file_name, qtd_cargos):
+def readConfigFile(file_name):
     cargos, digito, pos = [], [], []
     linhas = 0
 
@@ -75,6 +76,4 @@ if __name__ == '__main__':
     file, qtd = configElection()
     cargos, linhas, campos = readConfigFile(file, qtd)
 
-    print(cargos)
-    print(linhas)
-    print(campos)
+
