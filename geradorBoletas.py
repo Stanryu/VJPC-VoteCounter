@@ -31,8 +31,10 @@ if not os.path.isdir(os.getcwd() + stat + templates):
     os.mkdir(os.getcwd() + stat + templates)
 
 
-def geraBoleta(qtd_cargos, cargo, digitos, posicoes):
+def geraBoleta(qtd_cargos, cargos, digitos, layout_name):
+    
     soma_dos_digitos = 0
+    
     for elem in digitos:
         if int(elem) == 1:
             soma_dos_digitos = soma_dos_digitos + 120
@@ -44,8 +46,6 @@ def geraBoleta(qtd_cargos, cargo, digitos, posicoes):
             soma_dos_digitos = soma_dos_digitos + 210
         elif int(elem) == 5:
             soma_dos_digitos = soma_dos_digitos + 240
-
-
 
     # Calcula quantos px no eixo y os campos de votos ocuparão
     vote_field =  soma_dos_digitos + (qtd_cargos - 1) * interval
@@ -78,22 +78,21 @@ def geraBoleta(qtd_cargos, cargo, digitos, posicoes):
 
 
     for i in range(qtd_cargos):
-        if int(digitos[i])==1:
-            escrita=voto1.copy()
+        if int(digitos[i]) == 1:
+            escrita = voto1.copy()
             aux = 70
-        elif int(digitos[i])==2:
-            escrita=voto2.copy()
+        elif int(digitos[i]) == 2:
+            escrita = voto2.copy()
             aux = 102
-        elif int(digitos[i])==3:
-            escrita=voto3.copy()
+        elif int(digitos[i]) == 3:
+            escrita = voto3.copy()
             aux = 133
-        elif int(digitos[i])==4:
-            escrita=voto4.copy()
+        elif int(digitos[i]) == 4:
+            escrita = voto4.copy()
             aux = 156
-        elif int(digitos[i])==5:
-            escrita=voto5.copy()
+        elif int(digitos[i]) == 5:
+            escrita = voto5.copy()
             aux = 197
-        # Faz uma nova cópia do campo de voto para inserir o nome do cargo
 
         # Obtém cada nome de cargo formatado para inserção na boleta
         texto.append('{} '.format(cargos[i]))
@@ -105,9 +104,7 @@ def geraBoleta(qtd_cargos, cargo, digitos, posicoes):
         cv.putText(escrita, texto[i], (int(800 / 2 - tamanho[0] / 2), int(40 / 2 + tamanho[1] / 2)),fonte, escala, (255, 255, 255), grossura)
 
         # Insere o campo de voto na boleta
-
         boleta[y_atual :y_atual + aux , 0 : width] = escrita
-        print(y_atual)
 
         # Incrementa a posição y para inserção em sequência dos campos de votos
         y_atual += aux + 40
@@ -116,11 +113,11 @@ def geraBoleta(qtd_cargos, cargo, digitos, posicoes):
     # cv.waitKey(0)
 
     # Salva e retorna a boleta com os campos de votos e nomes de cargos inseridos
-    cv.imwrite(os.getcwd() + stat + templates + out_cargos_name, boleta)
+    cv.imwrite(os.getcwd() + stat + templates + layout_name + out_cargos_name, boleta)
     return boleta
 
 
-def adicionaLogo(boleta):
+def adicionaLogo(boleta, layout_name):
 
     logo = cv.imread(os.getcwd() + stat + logos + 'logo_2.jpg')
 
@@ -129,17 +126,17 @@ def adicionaLogo(boleta):
     boleta[175 : 175 + res.shape[0], 80 : 80 + res.shape[1]] = res
 
     # Salva as alterações
-    cv.imwrite(os.getcwd() + stat + logos + out_logo_name, boleta)
+    cv.imwrite(os.getcwd() + stat + logos + layout_name + out_logo_name, boleta)
 
 
 if __name__ == '__main__':
 
     # Obtém do usuário a configuração de layout de boleta desejado
-    config, qtd_cargos = electionConfiguration.configElection()
-    cargos, pos, digitos = electionConfiguration.readConfigFile(config)
+    config, qtd_cargos, name = electionConfiguration.configElection()
+    cargos, _, digitos, _ = electionConfiguration.readConfigFile(config)
 
     # Gera a boleta com os cargos desejados e componentes essenciais para leitura
-    boleta = geraBoleta(qtd_cargos, cargos, digitos, pos)
+    boleta = geraBoleta(qtd_cargos, cargos, digitos, name)
 
     # Adiciona um logotipo no cabeçalho (Opcional)
-    adicionaLogo(boleta)
+    adicionaLogo(boleta, name)
