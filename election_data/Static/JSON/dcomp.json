@@ -1,0 +1,67 @@
+{
+    "Candidatos": [
+        { 
+            "Cargo 1" : [
+                {
+                    "Name": "Charles Figueredo de Barros",
+                    "Number": 16,
+                    "CPF": "37078315559"
+                },
+                {
+                    "Name": "Alexandre Bittencourt Pigozzo",
+                    "Number": 33,
+                    "CPF": "41377544643"
+                },
+                {
+                    "Name": "Leonardo Chaves Dutra da Rocha",
+                    "Number": 44,
+                    "CPF": "48027292834"
+                },
+                {
+                    "Name": "Rafael Sachetto Oliveira",
+                    "Number": 55,
+                    "CPF": "53169549531"
+                },
+                {
+                    "Name": "Carolina Ribeiro Xavier",
+                    "Number": 66,
+                    "CPF": "37051129303"
+                }
+            ],
+            "Cargo 2" : [
+                {
+                    "Name": "Vinicius Humberto Serapilha Durelli",
+                    "Number": 8,
+                    "CPF": "44618795977"
+                },
+                {
+                    "Name": "Elverton Carvalho Fazzion",
+                    "Number": 7,
+                    "CPF": "64828914594"
+                },
+                {
+                    "Name": "Michelli Marlane Silva Loureiro",
+                    "Number": 3,
+                    "CPF": "41731227091"
+                }
+            ],
+            "Cargo 3" : [
+                {
+                    "Name": "Diego Roberto Colombo Dias",
+                    "Number": 123,
+                    "CPF": "64835292511"
+                },
+                {
+                    "Name": "Sofia Larissa da Costa Paiva",
+                    "Number": 234,
+                    "CPF": "98720638297"
+                },    
+                {
+                    "Name": "Edimilson Batista dos Santos",
+                    "Number": 345,
+                    "CPF": "51672773705"
+                }
+            ]
+        }
+    ]
+}
