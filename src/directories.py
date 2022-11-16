@@ -7,6 +7,7 @@ logos = '/Logotipos/'
 templates = '/Templates/'
 componentes = '/Components/'
 output = '/Cargas/'
+fingerprints = '/Fingerprints/'
 keys = '/Chaves Públicas/'
 people = '/JSON/'
 boletas = '/Novas Boletas/'
@@ -19,6 +20,8 @@ if not os.path.isdir(os.getcwd() + general_data + stat):
     os.mkdir(os.getcwd() + general_data + stat)
 if not os.path.isdir(os.getcwd() + general_data + stat + output):
     os.mkdir(os.getcwd() + general_data + stat + output)
+if not os.path.isdir(os.getcwd() + general_data + stat + fingerprints):
+    os.mkdir(os.getcwd() + general_data + stat + fingerprints)
 if not os.path.isdir(os.getcwd() + general_data + stat + keys):
     os.mkdir(os.getcwd() + general_data + stat + keys)
 if not os.path.isdir(os.getcwd() + general_data + stat + logos):

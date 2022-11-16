@@ -213,7 +213,7 @@ def configElection():
     with open(os.getcwd() + general_data + stat + output + report_name, 'w') as file:
         file.write(json_object_report)
 
-    with open(os.getcwd() + general_data + stat + output + info_name, 'w') as file:
+    with open(os.getcwd() + general_data + stat + fingerprints + info_name, 'w') as file:
         file.write(json_object_info)
 
     for cargo in sorted_by_order:
