@@ -67,7 +67,7 @@ def configElection():
 
     # Arquivos de configuração .json
     report_name = election_name + '_report.json'
-    info_name = election_name + '_info.json'
+    info_name = election_name + '_fingerprint.json'
 
     while True:
         try:
@@ -181,15 +181,6 @@ def configElection():
         print('Não existem candidatos aptos para eleição no arquivo informado!')
         exit(0)
 
-    # Arquivo JSON da configuração da eleição
-    sorted_by_order = sorted(dict_list, key=itemgetter('Ordem'))
-    json_config_report['Cargos'] = sorted_by_order
-    json_config_report['Eleitores'] = voters_list
-    json_object_report = json.dumps(json_config_report, indent=4)
-
-    # Fingerprint da eleição configurada para divulgação
-    election_fingerprint = SHA256.new(bytes(json_object_report.encode(encoding='utf-8')))
-    
     # Criação da chave pública da eleição
     prime_p, prime_q, base_g, public_key = exporting(election_name)
     key_dict = dict()
@@ -199,16 +190,23 @@ def configElection():
     key_dict['Key'] = public_key.decode('utf-8')
 
     # Informações gerais da eleição
-    info['Name'] = election_name
-    info['Description'] = description
-    info['Begin Date'] = begin_date
-    info['Begin Time'] = begin_time
-    info['End Date'] = end_date
-    info['End Time'] = end_time
-    info['Fingerprint'] = election_fingerprint.hexdigest()
-    info['Public Key'] = key_dict
+    json_config_report['Name'] = election_name
+    json_config_report['Description'] = description
+    json_config_report['Begin Date'] = begin_date
+    json_config_report['Begin Time'] = begin_time
+    json_config_report['End Date'] = end_date
+    json_config_report['End Time'] = end_time
+    json_config_report['Public Key'] = key_dict
 
-    json_config_info['Info'] = info
+    # Arquivo JSON da configuração da eleição
+    sorted_by_order = sorted(dict_list, key=itemgetter('Ordem'))
+    json_config_report['Cargos'] = sorted_by_order
+    json_config_report['Eleitores'] = voters_list
+    json_object_report = json.dumps(json_config_report, indent=4)
+
+    # Fingerprint da eleição configurada para divulgação
+    election_fingerprint = SHA256.new(bytes(json_object_report.encode(encoding='utf-8')))
+    json_config_info['Fingerprint'] = election_fingerprint.hexdigest()
     json_object_info = json.dumps(json_config_info, indent=4)
 
     # Exporta os arquivos de configuração JSON da eleição
