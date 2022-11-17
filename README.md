@@ -59,24 +59,24 @@ Construção de uma ferramenta para totalização de registros impressos de voto
       
 - Exemplo de entrada (*):
 
-       Teste
-       DCOMP
-       3
-       18/11/2022
-       12:00
-       20/11/2022
-       12:00
-       Cargo 1
-       1
-       2
-       Cargo 2
-       2
-       1
-       Cargo 3
-       3
-       3
-       dcomp
-       sjdr
+      Teste
+      DCOMP
+      3
+      18/11/2022
+      12:00
+      20/11/2022
+      12:00
+      Cargo 1
+      1
+      2
+      Cargo 2
+      2
+      1
+      Cargo 3
+      3
+      3
+      dcomp
+      sjdr
 
 - (*) Devem existir arquivos JSON contendo informações sobre os candidatos e eleitores, assim como as informações dos cargos devem ser compatíveis com os mesmos para que a eleição seja configurada de forma correta.
 
