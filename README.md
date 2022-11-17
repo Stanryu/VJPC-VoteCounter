@@ -62,9 +62,9 @@ Construção de uma ferramenta para totalização de registros impressos de voto
       Teste
       DCOMP
       3
-      18/11/2022
+      01/01/3022
       12:00
-      20/11/2022
+      03/01/3022
       12:00
       Cargo 1
       1
