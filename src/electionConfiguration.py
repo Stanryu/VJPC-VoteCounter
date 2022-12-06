@@ -265,6 +265,158 @@ def getConfigFile(name):
                 return cargos, digitos, pos, campos
 
 
+#  Subistitui os inputs por parametros
+def configElection_app(election_name, description, qtd_cargos, begin_date, begin_time, end_date, end_time,
+                       cargos_front, candidates, voters):
+    check = False
+    candidates_file, voters_file = None, None
+    json_config_report, json_config_info, info = dict(), dict(), dict()
+    dict_list, cargo_generate, digits_generate = list(), list(), list()
+    voters_list, each_number = list(), list()
+    # Arquivos de configuração .json
+    report_name = election_name + '_report.json'
+    info_name = election_name + '_info.json'
+
+    while True:
+        try:
+            begin_day, begin_month, begin_year = begin_date.split('/')
+            begin_hour, begin_minute = begin_time.split(':')
+            begin = datetime(int(begin_year), int(begin_month), int(begin_day), int(begin_hour), int(begin_minute), 0)
+
+            end_day, end_month, end_year = end_date.split('/')
+            end_hour, end_minute = end_time.split(':')
+            end = datetime(int(end_year), int(end_month), int(end_day), int(end_hour), int(end_minute), 0)
+
+            if (begin < end and begin > datetime.now()):
+                break
+            else:
+                print('As datas estão inconsistentes!')
+
+        except ValueError:
+            print('Insira informações válidas no formato especificado!')
+    contador = 0
+    for cargo in cargos_front:
+        contador += 1
+        aux_dict = dict()
+        aux_dict['Ordem'] = contador
+        aux_dict['Digitos'] = str(cargo[1])
+        aux_dict['Nome'] = (cargo[0])
+
+        dict_list.append(aux_dict)
+
+    while True:
+        try:
+            for _, _, files in os.walk(r'C:\Users\pvict\PycharmProjects\VJPC-VoteCounter\election_data\Static\JSON'):
+                for file in files:
+                    if candidates in file:
+                        candidates_file = file
+                    if voters in file:
+                        voters_file = file
+
+            if not candidates_file or not voters_file:
+                print('A eleição necessita de candidaturas e eleitores para ser configurada!')
+            else:
+                break
+
+        except ValueError:
+            print('Inconsistência encontrada!')
+
+    # Arquivos contendo dados sobre os candidatos e eleitores
+    with open(r'C:\Users\pvict\PycharmProjects\VJPC-VoteCounter\election_data\Static\JSON\dcomp.json',
+              'r') as file:
+        candidates_data = json.load(file)
+
+    with open(r'C:\Users\pvict\PycharmProjects\VJPC-VoteCounter\election_data\Static\JSON\sjdr.json',
+              'r') as file:
+        voters_data = json.load(file)
+
+    # Para cada cargo listado
+    candidates_list = list()
+    for cdts in candidates_data['Candidatos']:
+        for cdt in cdts:
+            # Percorre as candidaturas relacionando o cargo correspondente e o número de dígitos
+            for i in range(len(dict_list)):
+                for j in range(len(cdts[cdt])):
+                    number_ = str(cdts[cdt][j]['Number'])
+                    if str(dict_list[i]['Nome']) == str(cdt) and int(dict_list[i]['Digitos']) == int(len(number_)):
+                        # (nome do cargo, número, nome)
+                        candidates_list.append((cdt, number_, cdts[cdt][j]['Name']))
+
+    vts_names = dict()
+    for vts in voters_data['Eleitores']:
+        vts_names['Name'] = vts['Name']
+        vts_names['Vote'] = False
+        voters_list.append(vts_names.copy())
+    for i in range(len(dict_list)):
+
+        # Gera um dicionário contendo as candidaturas para cada cargo
+        each_number = dict()
+        for j in range(len(candidates_list)):
+
+            # Checa se o nome do cargo corresponde
+            if candidates_list[j][0] == dict_list[i]['Nome']:
+                # (key = número, value = nome)
+                each_number[str(candidates_list[j][1])] = candidates_list[j][2]
+                check = True
+
+        # A eleição só deve conter candidatos cujo cargo concorrido e número de dígitos se enquadrem na eleição
+        dict_list[i]['Candidatos'] = each_number.copy()
+
+    # Eleição sem candidatos não deve ocorrer
+    if not check:
+        print('Não existem candidatos aptos para eleição no arquivo informado!')
+        exit(0)
+
+    # Arquivo JSON da configuração da eleição
+    sorted_by_order = sorted(dict_list, key=itemgetter('Ordem'))
+    json_config_report['Cargos'] = sorted_by_order
+    json_config_report['Eleitores'] = voters_list
+    json_object_report = json.dumps(json_config_report, indent=4)
+
+    # Fingerprint da eleição configurada para divulgação
+    election_fingerprint = SHA256.new(bytes(json_object_report.encode(encoding='utf-8')))
+
+    # Criação da chave pública da eleição
+    prime_p, prime_q, base_g, public_key = exporting(election_name)
+    key_dict = dict()
+    key_dict['Prime P'] = prime_p.decode('utf-8')
+    key_dict['Prime Q'] = prime_q.decode('utf-8')
+    key_dict['Base G'] = base_g.decode('utf-8')
+    key_dict['Key'] = public_key.decode('utf-8')
+
+    # Informações gerais da eleição
+    info['Name'] = election_name
+    info['Description'] = description
+    info['Begin Date'] = begin_date
+    info['Begin Time'] = begin_time
+    info['End Date'] = end_date
+    info['End Time'] = end_time
+    info['Fingerprint'] = election_fingerprint.hexdigest()
+    info['Public Key'] = key_dict
+
+    json_config_info['Info'] = info
+    json_object_info = json.dumps(json_config_info, indent=4)
+
+    # Exporta os arquivos de configuração JSON da eleição
+    with open(os.getcwd() + general_data + stat + output + report_name, 'w') as file:
+        file.write(json_object_report)
+
+    with open(os.getcwd() + general_data + stat + output + info_name, 'w') as file:
+        file.write(json_object_info)
+
+    for cargo in sorted_by_order:
+        cargo_generate.append(cargo['Nome'])
+        digits_generate.append(cargo['Digitos'])
+
+    # Gera a boleta com conforme a configuração da eleição especificada pelo usuário
+    ballot = geraBoleta(qtd_cargos, cargo_generate, digits_generate, election_name)
+
+    # Adiciona um logotipo no cabeçalho (Opcional)
+    adicionaLogo(ballot, election_name)
+
+    return report_name, qtd_cargos, election_name
+
+
 if __name__ == '__main__':
 
     file, qtd, _ = configElection()

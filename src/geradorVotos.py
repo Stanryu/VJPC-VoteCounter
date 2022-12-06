@@ -27,5 +27,12 @@ def main():
     marking(name, ballot_layout, digito, tuple(votos), campos)
 
 
+def vote_app(votos):
+    name = 'Teste_report'
+    cargos, digito, _, campos = getConfigFile(name)
+    ballot_layout = get_ballot_layout(name)
+    marking(name, ballot_layout, digito, votos, campos)
+
+
 if __name__ == '__main__':
     main()
