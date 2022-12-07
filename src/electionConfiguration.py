@@ -1,3 +1,4 @@
+from Cryptodome.Random import get_random_bytes
 from Cryptodome.Util.py3compat import tobytes
 from digitalSignatureEG import keys_generator
 from geradorBoletas import adicionaLogo
@@ -7,6 +8,7 @@ from operator import itemgetter
 from Cryptodome.IO import PEM
 from datetime import datetime
 from directories import *
+from pathlib import Path
 import base64
 import json
 
@@ -15,12 +17,39 @@ cipher_name = 'EL GAMAL '
 p_type = cipher_name + 'PRIME P'
 q_type = cipher_name + 'PRIME Q'
 b_type = cipher_name + 'BASE G'
+x_type = cipher_name + 'PRIVATE KEY'
 y_type = cipher_name + 'PUBLIC KEY'
 
 
 def exporting(election_name):
 
-    p, q, g, _, y = keys_generator()
+    p, q, g, x, y = keys_generator()
+
+    x_b = str(x).encode()
+    private_key = tobytes(PEM.encode(x_b, x_type))
+
+    # Mudança de diretório para acessar o dispositivo USB
+    os.chdir(str(Path.home()))
+    os.chdir('..')
+    os.chdir('..')
+    if not os.path.isdir(os.getcwd() + 'media/julio/7A2F-BA93/Private Keys/'):
+        os.mkdir(os.getcwd() + 'media/julio/7A2F-BA93/Private Keys/')
+
+    # UNCOMMENT THIS TO EXECUTE
+    # os.chdir(str(Path.home()))
+    # os.chdir('..')
+    # os.chdir('..')
+    # if not os.path.isdir(os.getcwd() + '/Private Keys/'):
+    #     os.mkdir(os.getcwd() + '/Private Keys/')
+
+    # Salva o arquivo contendo a chave privada de assinatura em uma mídia externa no formato PEM
+    p_key_file = open(os.getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_name + '_privateKey.pem', 'w')
+    p_key_file.write(private_key.decode('utf-8'))
+    p_key_file.close()
+
+    # Exclui todos os objetos que contenham a chave privada em texto puro, e retorna ao diretório de aplicação
+    del(x, x_b, private_key)
+    os.chdir(current_dir)
 
     # Codifica as informações em bytes
     p_b = str(p).encode()
@@ -33,17 +62,14 @@ def exporting(election_name):
     base_g = tobytes(PEM.encode(g_b, b_type))
     public_key = tobytes(PEM.encode(y_b, y_type))
 
-    key_file = open(os.getcwd() + general_data + stat + keys + election_name + '_publicKey.pem', 'wb')
+    key_file = open(os.getcwd() + general_data + stat + keys + election_name + '_publicKey.pem', 'w')
 
     # Escreve a chave pública, o primo p, o primo q e a base g no arquivo
-    key_file.write(public_key + b'\n')
-    key_file.write(prime_p + b'\n')
-    key_file.write(prime_q + b'\n')
-    key_file.write(base_g)
+    key_file.write(public_key.decode('utf-8') + '\n')
+    key_file.write(prime_p.decode('utf-8') + '\n')
+    key_file.write(prime_q.decode('utf-8') + '\n')
+    key_file.write(base_g.decode('utf-8'))
     key_file.close()
-
-    # gh = b''.join([item for item in prime_p])
-    # print(gh == p_64)
     
     return base64.b64encode(p_b), base64.b64encode(q_b), base64.b64encode(g_b), base64.b64encode(y_b)
 
@@ -52,7 +78,7 @@ def configElection():
 
     check = False
     candidates_file, voters_file = None, None
-    json_config_report, json_config_info, info = dict(), dict(), dict()
+    json_config_report, json_config_info = dict(), dict()
     dict_list, cargo_generate, digits_generate = list(), list(), list()
     voters_list, each_number = list(), list()
 
@@ -125,7 +151,7 @@ def configElection():
                         voters_file = file
 
             if not candidates_file or not voters_file:
-                print('A eleição necessita de candidaturas e eleitores para ser configurada!')
+                raise FileNotFoundError('Arquivo não encontrado. A eleição necessita de candidaturas e eleitores para ser configurada!')
             else:
                 break
 
@@ -263,6 +289,8 @@ def getConfigFile(name):
             if name in file:
                 cargos, pos, digitos, campos = readConfigFile(file)
                 return cargos, digitos, pos, campos
+
+    return False, False, False, False
 
 
 if __name__ == '__main__':
