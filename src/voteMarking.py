@@ -1,7 +1,6 @@
 from digitalSignatureEG import apply_signature
 from directories import *
 from readVote import run2
-from PIL import Image
 import cv2 as cv
 import os
 
@@ -82,21 +81,18 @@ def marking(election_name, ballot, digits_qtd, vote, campos):
         y += role_jump
         k += 1
 
-        cv.imshow('ballot' + str(k), ballot)
-        cv.waitKey(0)
+        # cv.imshow('ballot' + str(k), ballot)
+        # cv.waitKey(0)
 
-    sig = apply_signature(election_name, ballot, campos)
+    sig, value_ballot = apply_signature(election_name, ballot, campos)
 
-    cv.imshow('ballot', sig)
-    cv.waitKey(0)
+    # cv.imshow('ballot', sig)
+    # cv.waitKey(0)
 
-    # img = Image.open(os.getcwd() + general_data + stat + boletas + election_name + '_qrcode_ballot.png')
-    # img_data = list(img.getdata())
-    # extract = Image.new(img.mode, img.size)
-    # extract.putdata(img_data)
-    # extract.save(os.getcwd() + general_data + stat + boletas + election_name + '_qrcode_ballot_nometadata.png')
+    if not os.path.isdir(os.getcwd() + general_data + ver + election_name + '_Urn/'):
+        os.mkdir(os.getcwd() + general_data + ver + election_name + '_Urn/')
 
-    # cv.imwrite(os.getcwd() + '/final_2.jpg', ballot)
+    cv.imwrite(current_dir + general_data + ver + election_name + '_Urn/' + str(value_ballot) + '.jpg', sig)
     return ballot
 
 
