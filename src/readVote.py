@@ -161,7 +161,7 @@ def removerMarcacoesIniciais(posicaoQuadrados, menor_x, maior_x, tamanho_marcado
 
 def run2(boleta, campos):
 
-    mostrar('boleta', boleta)
+    # mostrar('boleta', boleta)
 
     # Recorte da área de votação
     boleta = recorta(boleta)
@@ -199,7 +199,7 @@ def run2(boleta, campos):
     for vote in result:
         cv.drawContours(boleta, vote.c, -1, (0, 0, 255), 2)
 
-    mostrar('Vote', boleta)
+    # mostrar('Vote', boleta)
 
     matriz = construct_matrix(result, positionLines, positionColumns)
     votos = imprime_votos(matriz, campos)
