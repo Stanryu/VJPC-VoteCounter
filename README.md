@@ -43,13 +43,12 @@ Construção de uma ferramenta para totalização de registros impressos de voto
 - [ ] ellipticCurve.py
 - [x] geradorBoletas.py
 - [x] geradorVotos.py
-- [ ] imprimeResultado.py
+- [x] imprimeResultado.py
 - [x] readVote.py
 - [x] voteMarking.py
-- [ ] voteTotalizationAndVideoRecording.py
+- [x] voteTotalizationAndVideoRecording.py
 - [ ] voteTotalizationByCamera.py
-- [ ] voteTotalizationByUrn.py
-- [ ] voteTotalizationByVideo.py
+- [x] voteTotalizationByVideo.py
 
 # Execução 
 
@@ -91,6 +90,18 @@ Construção de uma ferramenta para totalização de registros impressos de voto
       python3 readVote.py
       
 - (*) Deve existir previamente uma boleta configurada (e possivelmente com votos marcados) para que esta possa ser lida de forma independente.
+
+### Módulo _voteTotalizationAndVideoRecording.py_ (*):
+      
+      python3 voteTotalizationAndVideoRecording.py
+      
+- (*) Deve existir uma eleição já configurada e também escolhas de voto no diretório de urna, para que se possa aplicar os processos de totalização por diretório ou geração do vídeo de auditoria.
+
+### Módulo _voteTotalizationAndVideoRecording.py_ (*):
+      
+      python3 voteTotalizationByVideo.py
+      
+- (*) Deve existir uma eleição já configurada e um vídeo de auditoria previamente gerado contendo as escolhas de voto para realizar a totalização por vídeo.
 
 # Outros
 
