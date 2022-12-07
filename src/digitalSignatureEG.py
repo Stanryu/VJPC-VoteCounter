@@ -8,8 +8,10 @@ from pyzbar.pyzbar import decode
 from barcode import EAN13
 from readVote import run2
 from directories import *
+from pathlib import Path
 import cv2 as cv
 import qrcode
+import base64
 import os
 
 
@@ -151,10 +153,82 @@ def read_QRCode(img):
     return signature
 
 
+def parsing_keys_file(election_name):
+
+    try:
+        with open(os.getcwd() + general_data + stat + keys + election_name + '_publicKey.pem', 'r') as file:
+
+            each_info = str()
+            data = list()
+            info = file.readlines()
+            info = [x.strip() for x in info]
+            
+            # Deleta as informações iniciais de cabeçalho
+            del info[:1]
+            for element in info:
+
+                if '-----END EL GAMAL' in element:
+                    data.append(each_info)
+                    each_info = ''
+                    continue
+                
+                if '-----BEGIN EL GAMAL' not in element:
+                    each_info += element
+    
+    except FileNotFoundError:
+        print('O arquivo de chave não foi encontrado!\n')
+        exit(0)
+
+    os.chdir(str(Path.home()))
+    os.chdir('..')
+    os.chdir('..')
+
+    try:
+        with open('media/julio/7A2F-BA93/Private Keys/' + election_name + '_privateKey.pem', 'r') as file:
+            
+            each_info = str()
+            pk = list()
+            info = file.readlines()
+            info = [x.strip() for x in info]
+            
+            # Deleta as informações iniciais de cabeçalho
+            del info[:1]
+            for element in info:
+
+                if '-----END EL GAMAL' in element:
+                    pk.append(each_info)
+                    each_info = ''
+                    continue
+                
+                if '-----BEGIN EL GAMAL' not in element:
+                    each_info += element
+    
+    except FileNotFoundError:
+        print('O arquivo de chave de derivação não foi encontrado!\n')
+        exit(0)
+
+    os.chdir(current_dir)
+
+    x_b = base64.b64decode(pk[0])
+    y_b = base64.b64decode(data[0])
+    p_b = base64.b64decode(data[1])
+    q_b = base64.b64decode(data[2])
+    g_b = base64.b64decode(data[3])
+
+    private_key = int(x_b, base=10)
+    public_key = int(y_b, base=10)
+    prime_p = int(p_b, base=10)
+    prime_q = int(q_b, base=10)
+    base_g = int(g_b, base=10)
+
+    del(x_b, pk)
+    return prime_p, prime_q, base_g, private_key, public_key
+
+
 def apply_signature(election_name, ballot, campos):
 
     # Obtém os primos (p, q), o gerador, a chave secreta e a chave pública
-    p, q, g, private_key, public_key = keys_generator()
+    p, q, g, private_key, public_key = parsing_keys_file(election_name)
 
     numero = random.randint(min, max)
     c_bar = EAN13(str(numero), writer = ImageWriter())
@@ -177,7 +251,8 @@ def apply_signature(election_name, ballot, campos):
     # Gera a assinatura digital El Gamal do conteúdo da boleta
     s1, s2 = sign_elgamal(ballot_content, g, p, q, private_key)
     signed = (ballot_content, s1, s2)
-    print('\nAssinatura: ', signed)
+    del(private_key)
+    # print('\nAssinatura: ', signed)
 
     # Gera o QR Code da assinatura digital realizada
     qrc = qrcode.make(signed)
@@ -190,11 +265,11 @@ def apply_signature(election_name, ballot, campos):
     # Insere o QR Code na boleta e realiza sua leitura para obter a assinatura
     signed_ballot = place_QRCode(election_name, ballot_barcode, qr_code)
     signature = read_QRCode(signed_ballot)
-    print('\nAssinatura lida do QR Code: ', signature)
+    # print('\nAssinatura lida do QR Code: ', signature)
 
     # Executa o algoritmo de verificação para a assinatura lida do QR Code
     cod, p1, p2 = restore_sign_pair(signature)
     verify = verify_elgamal(p1, p2, public_key, p, g, cod)
-    print('\nStatus da verificação: ', verify)
+    # print('\nStatus da verificação: ', verify)
 
-    return signed_ballot
+    return signed_ballot, n_serie
