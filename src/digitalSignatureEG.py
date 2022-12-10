@@ -175,7 +175,7 @@ def parsing_keys_file(election_name):
                 if '-----BEGIN EL GAMAL' not in element:
                     each_info += element
     
-    except FileNotFoundError:
+    except (FileNotFoundError, FileExistsError):
         print('O arquivo de chave não foi encontrado!\n')
         exit(0)
 
@@ -203,7 +203,7 @@ def parsing_keys_file(election_name):
                 if '-----BEGIN EL GAMAL' not in element:
                     each_info += element
     
-    except FileNotFoundError:
+    except (FileNotFoundError, FileExistsError):
         print('O arquivo de chave de derivação não foi encontrado!\n')
         exit(0)
 
@@ -233,7 +233,7 @@ def apply_signature(election_name, ballot, campos):
     numero = random.randint(min, max)
     c_bar = EAN13(str(numero), writer = ImageWriter())
     c_bar.save(os.getcwd() + general_data + stat + bar + election_name + '_barcode')
-
+    
     # Obtém o código de barras identificador correspondente
     codigo_barra = cv.imread(os.getcwd() + general_data + stat + bar + election_name + '_barcode.png')
 
