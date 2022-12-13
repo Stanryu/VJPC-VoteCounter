@@ -69,8 +69,8 @@ def identificaMarcacoes(img, tam_pincel):
     img_blur = cv.GaussianBlur(img_cinza, (tam_pincel, tam_pincel), 0)
 
     # Imagem em escala cinza borrada e binarizada
-    _, img_binaria = cv.threshold(img_blur, 0, 255, 
-                                    cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
+    _, img_binaria = cv.threshold(img_blur, 32, 255, 
+                                    cv.THRESH_BINARY_INV)
 
     # Identificação de poligonos com 4 lados
     contornos, _ = cv.findContours(img_binaria, 
