@@ -180,9 +180,10 @@ def configElection():
                         # (nome do cargo, número, nome)
                         candidates_list.append((cdt, number_, cdts[cdt][j]['Name']))
 
+    # A autenticação é o CPF de cada eleitor, armazenado no arquivo de configuração após passar por uma função Hash
     vts_names = dict()
     for vts in voters_data['Eleitores']:
-        vts_names['Name'] = vts['Name']
+        vts_names['Password'] = SHA256.new(vts['CPF'].encode()).hexdigest()
         vts_names['Vote'] = False
         voters_list.append(vts_names.copy())
         
