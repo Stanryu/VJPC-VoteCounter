@@ -1,5 +1,6 @@
 from electionConfiguration import getConfigFile
 from geradorBoletas import get_ballot_layout
+from geradorBoletas import shuffle_metadata
 from Cryptodome.Hash import SHA256
 from voteMarking import marking
 from directories import *
@@ -87,6 +88,8 @@ def main():
     elif not authorized:
         print('\nO eleitor já votou!')
 
+    # A cada voto inserido, os metadados são manipulados
+    shuffle_metadata(name)
 
 
 if __name__ == '__main__':

@@ -95,9 +95,6 @@ def geraBoleta(qtd_cargos, cargos, digitos, layout_name):
         # Incrementa a posição y para inserção em sequência dos campos de votos
         y_atual += aux + interval
 
-    # cv.imshow('teste', boleta)
-    # cv.waitKey(0)
-
     # Salva e retorna a boleta com os campos de votos e nomes de cargos inseridos
     cv.imwrite(os.getcwd() + general_data + stat + templates + layout_name + '.jpg', boleta)
     return boleta
@@ -124,15 +121,22 @@ def get_ballot_layout(name):
                 return ballot_layout
 
 
-if __name__ == '__main__':
+def shuffle_metadata(election_name):
 
-    name = str(input("Digite o nome da eleição: "))
+    # Obtém a lista com os nomes de todos os arquivos presentes na urna
+    try:
+        path = current_dir + general_data + ver + election_name + '_Urn/'
+        ballots = os.listdir(path)
+    except NotADirectoryError:
+        print("A urna solicitada não existe ou não foi encontrada!")
 
-    # cargos, digits, _ = getConfigFile(name)
-    # qtd_cargos = len(digits)
+    if not ballots:
+        print('Não foram encontrados registros na urna!')
+        return
 
-    # # Gera a boleta com conforme o nome do arquivo de configuração especificado pelo usuário
-    # ballot = geraBoleta(qtd_cargos, cargos, digits, name)
+    # Para cada registro na urna, leia, remova e reescreva-o
+    for img in ballots:
 
-    # # Adiciona um logotipo no cabeçalho (Opcional)
-    # adicionaLogo(ballot, name)
+        ballot = cv.imread(path + img)
+        os.remove(path + img)
+        cv.imwrite(path + img, ballot)
