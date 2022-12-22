@@ -15,23 +15,6 @@ def main():
     ballot_layout = get_ballot_layout(name)
     cont = 0
     votos = list()
-
-    # Obtém o nome do arquivo de configuração
-    check = False
-    for _, _, files in os.walk(os.getcwd() + general_data + stat + output):
-        for file in files:
-            
-            if name in file:
-                file_election = file
-                check = True
-                break
-        
-        if check:
-            break
-
-    if not check:
-        print('\nO arquivo desejado não existe ou não foi encontrado!')
-        exit(0)
     
     try:
         voter_aut = str(input("Informe o CPF: "))
@@ -44,26 +27,38 @@ def main():
 
     authorized = False
     ghost = True
-    with open(os.getcwd() + general_data + stat + output + file_election, 'r') as file:
-        
-        data = json.load(file)
 
-        for voter in data['Eleitores']:
+    try:
+        with open(os.getcwd() + general_data + stat + output + name + '_report.json', 'r') as config:
+            with open(os.getcwd() + general_data + stat + people + name + '_control.json', 'r') as control:
+            
+                report_data = json.load(config)
+                control_data = json.load(control)
 
-            if voter['Password'] == SHA256.new(voter_aut.encode()).hexdigest() and voter['Vote'] == False:
-                voter['Vote'] = True
-                authorized = True
-                ghost = False
+                for voter, enable in zip(report_data['Eleitores'], control_data['Eleitores']):
+                    
+                    hash_input = voter_aut + voter['Salt']
 
-                # Atualiza o arquivo de configuração, marcando eleitores que já votaram
-                data = json.dumps(data.copy(), indent=4)
-                with open(os.getcwd() + general_data + stat + output + file_election, 'w') as file:
-                    file.write(data)
+                    if voter['Authentication'] == SHA256.new(voter_aut.encode()).hexdigest() and\
+                    enable['Authentication'] == SHA256.new(hash_input.encode()).hexdigest() and\
+                    voter['Salt'] == enable['Salt'] and enable['Vote'] == False:
 
-                break
-            elif voter['Password'] == SHA256.new(voter_aut.encode()).hexdigest() and voter['Vote'] == True:
-                ghost = False
-                break
+                        enable['Vote'] = True
+                        authorized = True
+                        ghost = False
+
+                        # Atualiza o arquivo de configuração, marcando eleitores que já votaram
+                        control_data = json.dumps(control_data.copy(), indent=4)
+                        with open(os.getcwd() + general_data + stat + people + name + '_control.json', 'w') as file:
+                            file.write(control_data)
+
+                        break
+                    elif voter['Authentication'] == SHA256.new(voter_aut.encode()).hexdigest() and enable['Vote'] == True:
+                        ghost = False
+                        break
+
+    except (FileExistsError, FileNotFoundError):
+        print('Os arquivos não foram encontrados ou não existem!\n')
 
     if authorized:
 
