@@ -35,7 +35,7 @@ def exporting(election_name):
     if not os.path.isdir(os.getcwd() + 'media/julio/7A2F-BA93/Private Keys/'):
         os.mkdir(os.getcwd() + 'media/julio/7A2F-BA93/Private Keys/')
 
-    # UNCOMMENT THIS TO EXECUTE
+    # CHANGE PEM DIR TO EXECUTE
     # os.chdir(str(Path.home()))
     # os.chdir('..')
     # os.chdir('..')
@@ -94,6 +94,7 @@ def configElection():
     # Arquivos de configuração .json
     report_name = election_name + '_report.json'
     info_name = election_name + '_fingerprint.json'
+    control_name = election_name + '_control.json'
 
     while True:
         try:
@@ -180,11 +181,27 @@ def configElection():
                         # (nome do cargo, número, nome)
                         candidates_list.append((cdt, number_, cdts[cdt][j]['Name']))
 
+    # A autenticação é o CPF de cada eleitor, armazenado no arquivo de configuração após passar por uma função Hash
     vts_names = dict()
+    v_control, vote_checking = dict(), dict()
+    control_list = list()
     for vts in voters_data['Eleitores']:
-        vts_names['Name'] = vts['Name']
-        vts_names['Vote'] = False
+
+        # Gera a string de sal aleatoriamente e concatena com o cpf
+        salt = str(get_random_bytes(32))
+        hash_input = vts['CPF'] + salt
+
+        # O aruivo de configuração recebe o hash do cpf e o sal
+        vts_names['Authentication'] = SHA256.new(vts['CPF'].encode()).hexdigest()
+        vts_names['Salt'] = salt
+
+        # O aruivo de controle de votação recebe o hash do cpf concatenado com o sal, o sal e o booleano de controle
+        v_control['Authentication'] = SHA256.new(hash_input.encode()).hexdigest()
+        v_control['Salt'] = salt
+        v_control['Vote'] = False
+
         voters_list.append(vts_names.copy())
+        control_list.append(v_control.copy())
         
     for i in range(len(dict_list)):
         
@@ -235,12 +252,21 @@ def configElection():
     json_config_info['Fingerprint'] = election_fingerprint.hexdigest()
     json_object_info = json.dumps(json_config_info, indent=4)
 
-    # Exporta os arquivos de configuração JSON da eleição
+    # Informações sobre os eleitores para controle de votação
+    vote_checking['Eleitores'] = control_list
+    json_vote_control = json.dumps(vote_checking, indent=4)
+
+    # Exporta o arquivo de configuração JSON da eleição
     with open(os.getcwd() + general_data + stat + output + report_name, 'w') as file:
         file.write(json_object_report)
 
+    # Exporta o arquivo contendo a fingerprint do arquivo de configuração JSON da eleição
     with open(os.getcwd() + general_data + stat + fingerprints + info_name, 'w') as file:
         file.write(json_object_info)
+
+    # Exporta o arquivo para controle de voto dos eleitores
+    with open(os.getcwd() + general_data + stat + people + control_name, 'w') as file:
+        file.write(json_vote_control)
 
     for cargo in sorted_by_order:
         cargo_generate.append(cargo['Nome'])

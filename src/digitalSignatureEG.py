@@ -100,11 +100,11 @@ def decrypt_elgamal(c1, c2, private_key, p):
 def place_barcode(election_name, img, codigo_barra):
 
     # Redimensiona o código de barras
-    res = cv.resize(codigo_barra, dsize = (523, 80), interpolation = cv.INTER_CUBIC)
+    res = cv.resize(codigo_barra, dsize = (230, 85), interpolation = cv.INTER_CUBIC)
     height, width = res.shape[:2]
 
     # Insere o código de barras na boleta
-    img[80 : 80 + height, 50 : 50 + width] = res
+    img[80 : 80 + height, 280 : 280 + width] = res
 
     # Salva as alterações
     cv.imwrite(os.getcwd() + general_data + stat + boletas + election_name + '_barcode_ballot.png', img)
@@ -115,7 +115,7 @@ def place_barcode(election_name, img, codigo_barra):
 def read_barcode(img):
 
     # Destaca o código de barras
-    codigo_barra = img[70 : 150, 80 : 550]
+    codigo_barra = img[70 : 145, 300 : 485]
     info = decode(codigo_barra)
 
     # Obtém o número de série
@@ -175,7 +175,7 @@ def parsing_keys_file(election_name):
                 if '-----BEGIN EL GAMAL' not in element:
                     each_info += element
     
-    except FileNotFoundError:
+    except (FileNotFoundError, FileExistsError):
         print('O arquivo de chave não foi encontrado!\n')
         exit(0)
 
@@ -203,7 +203,7 @@ def parsing_keys_file(election_name):
                 if '-----BEGIN EL GAMAL' not in element:
                     each_info += element
     
-    except FileNotFoundError:
+    except (FileNotFoundError, FileExistsError):
         print('O arquivo de chave de derivação não foi encontrado!\n')
         exit(0)
 
@@ -233,7 +233,7 @@ def apply_signature(election_name, ballot, campos):
     numero = random.randint(min, max)
     c_bar = EAN13(str(numero), writer = ImageWriter())
     c_bar.save(os.getcwd() + general_data + stat + bar + election_name + '_barcode')
-
+    
     # Obtém o código de barras identificador correspondente
     codigo_barra = cv.imread(os.getcwd() + general_data + stat + bar + election_name + '_barcode.png')
 
