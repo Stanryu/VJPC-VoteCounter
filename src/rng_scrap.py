@@ -8,7 +8,7 @@ from time import sleep
 
 
 # Total de números para gerar, intervalo dos mesmos e página Web para gerar
-total = 1001
+total = 10000000
 min = pow(10, 11)
 max = pow(10, 12) - 1
 rng_url = 'https://www.gigacalculator.com/calculators/random-number-generator.php'
@@ -64,17 +64,14 @@ def randomness_evaluation():
 
     print('Inicializando...\n')
     all_numbers = list()
+    my_browser = initialize_browser()
 
     # Enquanto não forem gerados números suficientes
     while len(all_numbers) < total:
 
-        # TODO: Executar o scrapping apenas com uma única instância do browser do início ao fim
-        my_browser = initialize_browser()
-
         # Preenche os campos da paǵina, obtém os números gerados e adiciona-os na lista
         generated_numbers = auto_generation(my_browser)
         all_numbers += generated_numbers
-        my_browser.close()
 
         del(generated_numbers)
         progress = (len(all_numbers) / total) * 100.0
@@ -83,6 +80,8 @@ def randomness_evaluation():
         # Tempo definido aleatoriamente entre cada requisição para evitar bloqueio por IP
         timing = random.randint(2, 4)
         sleep(timing)
+
+    my_browser.close()
 
     # Resultado
     print('\nFinalizado!\n')
