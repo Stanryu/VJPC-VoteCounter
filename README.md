@@ -6,31 +6,33 @@ Construção de uma ferramenta para totalização de registros impressos de voto
 
 # Requisitos
 
-- [Python](https://python.org) 3.6 ou superior
+- [Python](https://python.org) 3.6 ou superior e gerenciador de pacotes [_pip_](https://pip.pypa.io/en/stable/installation/):
 
-- Gerenciador de pacotes [_pip_](https://pip.pypa.io/en/stable/installation/)
+      sudo apt install python3 python3-pip build-essential python3-dev
 
-       python -m ensurepip --upgrade
+- Biblioteca [OpenCV](https://opencv.org/):
 
-- Biblioteca [OpenCV](https://opencv.org/)
-
-       pip install opencv-python
+      pip install opencv-python
        
-- Biblioteca [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/introduction.html)
+- Biblioteca [PyCryptodome](https://pycryptodome.readthedocs.io/en/latest/src/introduction.html):
  
-       pip install pycryptodomex
+      pip install pycryptodomex
        
-- Biblioteca [python-barcode](https://python-barcode.readthedocs.io/en/stable/)
+- Biblioteca [python-barcode](https://python-barcode.readthedocs.io/en/stable/):
 
-       pip install python-barcode
+      pip install python-barcode
        
-- Biblioteca [qrcode](https://pypi.org/project/qrcode/)
+- Biblioteca [qrcode](https://pypi.org/project/qrcode/):
 
-       pip install qrcode[pil]
+      pip install qrcode[pil]
   
-- Biblioteca [numpy](https://numpy.org/)
+- Biblioteca [numpy](https://numpy.org/):
 
-       pip install numpy
+      pip install numpy
+      
+- Para instalar todas as dependências:
+
+      ./install_dependencies.sh
     
 # Software
 - [Visual Studio Code](https://code.visualstudio.com/) (Plugins: Python e Code Runner) 
@@ -54,7 +56,7 @@ Construção de uma ferramenta para totalização de registros impressos de voto
 
 ### Módulo _electionConfiguration.py_:
       
-      python3 electionConfiguration.py
+    python3 electionConfiguration.py
       
 - Exemplo de entrada (*):
 
@@ -81,25 +83,25 @@ Construção de uma ferramenta para totalização de registros impressos de voto
 
 ### Módulo _geradorVotos.py_ (*):
       
-      python3 geradorVotos.py
+    python3 geradorVotos.py
       
 - (*) Deve existir uma eleição já cadastrada (por consequência um _layout_ de boleta configurado) para que se possa simular uma escolha de voto isolada.
 
 ### Módulo _readVote.py_ (*):
       
-      python3 readVote.py
+    python3 readVote.py
       
 - (*) Deve existir previamente uma boleta configurada (e possivelmente com votos marcados) para que esta possa ser lida de forma independente.
 
 ### Módulo _voteTotalizationAndVideoRecording.py_ (*):
       
-      python3 voteTotalizationAndVideoRecording.py
+    python3 voteTotalizationAndVideoRecording.py
       
 - (*) Deve existir uma eleição já configurada e também escolhas de voto no diretório de urna, para que se possa aplicar os processos de totalização por diretório ou geração do vídeo de auditoria.
 
 ### Módulo _voteTotalizationAndVideoRecording.py_ (*):
       
-      python3 voteTotalizationByVideo.py
+    python3 voteTotalizationByVideo.py
       
 - (*) Deve existir uma eleição já configurada e um vídeo de auditoria previamente gerado contendo as escolhas de voto para realizar a totalização por vídeo.
 
