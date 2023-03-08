@@ -5,7 +5,7 @@ from Cryptodome.Random import random
 from Cryptodome.Hash import SHA256
 from Cryptodome.Util import number
 from pyzbar.pyzbar import decode
-from barcode import EAN13
+from barcode import Code128
 from readVote import run2
 from directories import *
 from pathlib import Path
@@ -19,8 +19,8 @@ import os
 n = 512
 
 # Criação do código de barras de 12 dígitos
-min = pow(10, 11)
-max = pow(10, 12) - 1
+min = pow(10, 38)
+max = pow(10, 39) - 1
 
 
 def keys_generator():
@@ -100,11 +100,11 @@ def decrypt_elgamal(c1, c2, private_key, p):
 def place_barcode(election_name, img, codigo_barra):
 
     # Redimensiona o código de barras
-    res = cv.resize(codigo_barra, dsize = (230, 85), interpolation = cv.INTER_CUBIC)
+    res = cv.resize(codigo_barra, dsize = (500, 100), interpolation = cv.INTER_CUBIC)
     height, width = res.shape[:2]
 
     # Insere o código de barras na boleta
-    img[80 : 80 + height, 280 : 280 + width] = res
+    img[60 : 60 + height, 150 : 150 + width] = res
 
     # Salva as alterações
     cv.imwrite(os.getcwd() + general_data + stat + boletas + election_name + '_barcode_ballot.png', img)
@@ -115,7 +115,7 @@ def place_barcode(election_name, img, codigo_barra):
 def read_barcode(img):
 
     # Destaca o código de barras
-    codigo_barra = img[70 : 145, 300 : 485]
+    codigo_barra = img[50 : 170, 140 : 660]
     info = decode(codigo_barra)
 
     # Obtém o número de série
@@ -231,8 +231,9 @@ def apply_signature(election_name, ballot, campos):
     p, q, g, private_key, public_key = parsing_keys_file(election_name)
 
     numero = random.randint(min, max)
-    c_bar = EAN13(str(numero), writer = ImageWriter())
-    c_bar.save(os.getcwd() + general_data + stat + bar + election_name + '_barcode')
+    custom_bar = dict(font_size=6)
+    c_bar = Code128(str(numero), writer = ImageWriter())
+    c_bar.save(os.getcwd() + general_data + stat + bar + election_name + '_barcode', options=custom_bar)
     
     # Obtém o código de barras identificador correspondente
     codigo_barra = cv.imread(os.getcwd() + general_data + stat + bar + election_name + '_barcode.png')
