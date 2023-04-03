@@ -1,5 +1,2 @@
-
+**/node_modules
 *.pyc
-.vscode/launch.json
-launch.json
-.vscode/settings.json
