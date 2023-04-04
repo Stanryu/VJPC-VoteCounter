@@ -38,8 +38,8 @@
 								<td>{{ election.Fingerprint }}</td>
 								<td>
 									<div class="btn-group" role="group">
-										<button type="button" class="btn btn-info btn-sm" v-b-modal.election-edit-modal @click="editElection(election)">Update</button>
-										<button type="button" class="btn btn-danger btn-sm" @click="deleteElection(election)">Delete</button>
+										<button type="button" class="btn btn-info btn-sm" v-b-modal.authenticate-edit @click="editElection(election)">Update</button>
+										<button type="button" class="btn btn-danger btn-sm" v-b-modal.authenticate-edit @click="deleteElection(election)">Delete</button>
 									</div>
 								</td>
 							</tr>
@@ -135,7 +135,25 @@
 					</b-form-group>
 
 					<b-button type="submit" variant="outline-info">Submit</b-button>
-					<b-button type="reset" variant="outline-danger">Reset</b-button>
+					<b-button type="reset" variant="outline-danger">Cancel</b-button>
+				</b-form>
+			</b-modal>
+
+			<b-modal ref="authenticateEdit" id="authenticate-edit" title="Authentication" hide-backdrop hide-footer>
+				<b-form @submit="onSubmitAuth" @reset="onResetAuth" class="w-100 text-center">
+					
+					<b-form-group id="form-auth-edit-group" label="Password" label-for="form-auth-edit-input">
+						<b-form-input id="form-auth-edit-input" 
+									type="text" 
+									v-model="authEditElectionForm.Password" 
+									required 
+									placeholder="Enter your master password...">
+						</b-form-input>
+					</b-form-group>
+
+					<b-button type="submit" variant="outline-success">Authenticate</b-button>
+					<b-button type="reset" variant="outline-danger">Cancel</b-button>
+
 				</b-form>
 			</b-modal>
 
@@ -226,7 +244,7 @@
 					</b-form-group>
 
 					<b-button type="submit" variant="outline-info">Submit</b-button>
-					<b-button type="reset" variant="outline-danger">Reset</b-button>
+					<b-button type="reset" variant="outline-danger">Cancel</b-button>
 				</b-form>
 			</b-modal>
 		</div>
@@ -262,6 +280,13 @@ export default {
 				'EndTime': '',
 				'CandidatesFile': '',
 				'VotersFile': ''
+			},
+			authEditElectionForm: {
+				'Password': ''
+			},
+			toRemove: {
+				'ID': '',
+				'Operation': ''
 			}
 		};
 	},
@@ -291,25 +316,32 @@ export default {
 			});
 		},
 		clearForm() {
-			this.createElectionForm.Name = '',
-			this.createElectionForm.Description = '',
-			this.createElectionForm.Quantity = '',
-			this.createElectionForm.StartDate = '',
-			this.createElectionForm.StartTime = '',
-			this.createElectionForm.EndDate = '',
+			this.createElectionForm.Name = '';
+			this.createElectionForm.Description = '';
+			this.createElectionForm.Quantity = '';
+			this.createElectionForm.StartDate = '';
+			this.createElectionForm.StartTime = '';
+			this.createElectionForm.EndDate = '';
 			this.createElectionForm.EndTime = ''
-			this.createElectionForm.CandidatesFile = '',
+			this.createElectionForm.CandidatesFile = '';
 			this.createElectionForm.VotersFile = ''
-			this.editElectionForm.ID = '',
-			this.editElectionForm.Name = '',
-			this.editElectionForm.Description = '',
-			this.editElectionForm.Quantity = '',
-			this.editElectionForm.StartDate = '',
-			this.editElectionForm.StartTime = '',
-			this.editElectionForm.EndDate = '',
+			this.editElectionForm.ID = '';
+			this.editElectionForm.Name = '';
+			this.editElectionForm.Description = '';
+			this.editElectionForm.Quantity = '';
+			this.editElectionForm.StartDate = '';
+			this.editElectionForm.StartTime = '';
+			this.editElectionForm.EndDate = '';
 			this.editElectionForm.EndTime = ''
-			this.editElectionForm.CandidatesFile = '',
-			this.editElectionForm.VotersFile = ''
+			this.editElectionForm.CandidatesFile = '';
+			this.editElectionForm.VotersFile = '';
+		},
+		clearPswd() {
+			this.authEditElectionForm.Password = '';
+		},
+		clearRemoved() {
+			this.toRemove.ID = '';
+			this.toRemove.Operation = '';
 		},
 		onSubmit(e) {
 			e.preventDefault();
@@ -333,6 +365,19 @@ export default {
 			this.$refs.createElectionModal.hide();
 			this.clearForm();
 		},
+		onSubmitAuth(e) {
+			e.preventDefault();
+			const payload = {
+				Password: this.authEditElectionForm.Password
+			};
+			this.authenticateBoardMember(payload);
+			this.clearPswd();
+		},
+		onResetAuth(e) {
+			e.preventDefault();
+			this.$refs.authenticateEdit.hide();
+			this.clearPswd();
+		},
 		onSubmitUpdate(e) {
 			e.preventDefault();
 			this.$refs.editElectionModal.hide();
@@ -355,6 +400,24 @@ export default {
 			this.$refs.editElectionModal.hide();
 			this.clearForm();
 			this.getElections();
+		},
+		authenticateBoardMember(payload) {
+			const path = 'http://localhost:5000';
+			axios.post(path, payload)
+			.then((res) => {
+				if (res.data['status'] == 'success' && this.toRemove.Operation == '') {
+					this.$refs.authenticateEdit.hide();
+					this.$refs.editElectionModal.show();
+				} else if (res.data['status'] == 'success' && this.toRemove.Operation == 'D') {
+					this.$refs.authenticateEdit.hide();
+					this.removeElection(this.toRemove.ID);
+					this.clearRemoved();
+				}
+			})
+			.catch((err) => {
+				alert(err);
+				this.getElections();
+			});
 		},
 		updateElection(payload, electionID) {
 			const path = `http://localhost:5000/${electionID}`;
@@ -386,7 +449,8 @@ export default {
 			});
 		},
 		deleteElection(election) {
-			this.removeElection(election.ID);
+			this.toRemove['ID'] = election.ID;
+			this.toRemove['Operation'] = 'D';
 		}
 	},
 	created() {

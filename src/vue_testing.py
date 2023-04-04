@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import uuid
-
+from Cryptodome.Hash import HMAC, SHA256
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -43,6 +43,10 @@ TEST = [
     }
 ]
 
+# Must be 32 bytes or longer
+secret = 'Validate'
+tag = b'\xdb\xe6\xba\xdb\x91\xc72\xf7M!\xbb\x9ck\x8e/\xaaO\xc2\x8f}"\x1b\xc7*\xfcBO\x15\xac\x96\xf3^'
+
 
 @app.route('/', methods=['GET', 'POST'])
 def all_elections():
@@ -50,18 +54,34 @@ def all_elections():
 
     if request.method == 'POST':
         post_data = request.get_json()
-        TEST.append({
-            'ID': uuid.uuid1().hex,
-            'Name': post_data.get('Name'),
-            'Description': post_data.get('Description'),
-            'Quantity': post_data.get('Quantity'),
-            'StartDate': post_data.get('StartDate'),
-            'StartTime': post_data.get('StartTime'),
-            'EndDate': post_data.get('EndDate'),
-            'EndTime': post_data.get('EndTime')})
-        response_object['message'] = 'Election Created!'
+
+        if len(post_data) == 1:
+            message = post_data.get('Password')
+        
+            h = HMAC.new(bytes(secret, 'utf-8'), digestmod=SHA256)
+            h.update(bytes(message, 'utf-8'))
+
+            try:
+                h.verify(tag)
+                response_object = {'status': 'success'}
+                response_object['message'] = 'Authentication Successful!'
+            except ValueError:
+                response_object = {'status': 'failed'}
+                response_object['message'] = 'Authentication Failed!'
+        else:
+            TEST.append({
+                'ID': uuid.uuid1().hex,
+                'Name': post_data.get('Name'),
+                'Description': post_data.get('Description'),
+                'Quantity': post_data.get('Quantity'),
+                'StartDate': post_data.get('StartDate'),
+                'StartTime': post_data.get('StartTime'),
+                'EndDate': post_data.get('EndDate'),
+                'EndTime': post_data.get('EndTime')})
+            response_object['message'] = 'Election Created!'
     else:
         response_object['elections'] = TEST
+    
     return jsonify(response_object)
 
 
