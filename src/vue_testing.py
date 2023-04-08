@@ -117,6 +117,30 @@ def remove_election(election_id):
         if election['ID'] == election_id:
             TEST.remove(election)
             return True
+        
+
+@app.route('/voting', methods=['GET', 'POST'])
+def show_elections():
+    response_object = {'status': 'success'}
+    
+    if request.method == 'POST':
+        post_data = request.get_json()
+
+        message = post_data.get('Password')
+        
+        h = HMAC.new(bytes(secret, 'utf-8'), digestmod=SHA256)
+        h.update(bytes(message, 'utf-8'))
+
+        try:
+            h.verify(tag)
+            response_object = {'status': 'success'}
+            response_object['message'] = 'Authentication Successful!'
+        except ValueError:
+            response_object = {'status': 'failed'}
+            response_object['message'] = 'Authentication Failed!'
+    else:
+        response_object['elections'] = TEST
+    return jsonify(response_object)
 
 
 if __name__ == '__main__':
