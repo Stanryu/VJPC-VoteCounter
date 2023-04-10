@@ -70,70 +70,6 @@
 						</b-form-input>
 					</b-form-group>
 
-					<b-form-group class="create-form-control" id="form-begindate-group" label="Start Date" label-for="form-begindate-input">
-						<b-form-input id="form-begindate-input" 
-									type="text" 
-									v-model="createElectionForm.StartDate" 
-									required 
-									placeholder="Enter the election start date... (e.g., dd/MM/yyyy)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
-					<b-form-group class="create-form-control" id="form-starttime-group" label="Start Time" label-for="form-starttime-input">
-						<b-form-input id="form-starttime-input" 
-									type="text" 
-									v-model="createElectionForm.StartTime" 
-									required 
-									placeholder="Enter the election start time... (e.g., hh:mm)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
-					<b-form-group class="create-form-control" id="form-enddate-group" label="End Date" label-for="form-enddate-input">
-						<b-form-input id="form-enddate-input" 
-									type="text" 
-									v-model="createElectionForm.EndDate" 
-									required 
-									placeholder="Enter the election end date... (e.g., dd/MM/yyyy)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
-					<b-form-group class="create-form-control" id="form-endtime-group" label="End Time" label-for="form-endtime-input">
-						<b-form-input id="form-endtime-input" 
-									type="text" 
-									v-model="createElectionForm.EndTime" 
-									required 
-									placeholder="Enter the election end time... (e.g., hh:mm)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
 					<b-form-group id="form-candidatesfile-group" label="Candidates File" label-for="form-candidatesfile-input">
 						<b-form-input id="form-candidatesfile-input" 
 									type="text" 
@@ -150,6 +86,38 @@
 									required 
 									placeholder="Enter the voters file name... ">
 						</b-form-input>
+					</b-form-group>
+
+					<b-form-group class="create-form-control" id="form-startdate-group" label="Start" label-for="form-startdate-input">
+						<b-form-input id="form-begindate-input"
+									type="datetime-local"
+									:min="min"
+									v-model="createElectionForm.Start"
+									required>
+						</b-form-input>
+						<span class="exclamation">
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<span class="check">
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<b-small></b-small>
+					</b-form-group>
+
+					<b-form-group class="create-form-control" id="form-enddate-group" label="End" label-for="form-enddate-input">
+						<b-form-input id="form-enddate-input" 
+									type="datetime-local"
+									:min="min"
+									v-model="createElectionForm.End" 
+									required>
+						</b-form-input>
+						<span class="exclamation">
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<span class="check">
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<b-small></b-small>
 					</b-form-group>
 
 					<b-form-group class="create-form-control" id="form-password-group" label="Master Password" label-for="form-password-input">
@@ -212,70 +180,6 @@
 						</b-form-input>
 					</b-form-group>
 
-					<b-form-group class="create-form-control" id="form-begindate-edit-group" label="Start Date" label-for="form-begindate-edit-input">
-						<b-form-input id="form-begindate-edit-input" 
-									type="text" 
-									v-model="editElectionForm.StartDate" 
-									required 
-									placeholder="Enter the election start date... (e.g., dd/MM/yyyy)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
-					<b-form-group class="create-form-control" id="form-starttime-edit-group" label="Start Time" label-for="form-starttime-edit-input">
-						<b-form-input id="form-starttime-edit-input" 
-									type="text" 
-									v-model="editElectionForm.StartTime" 
-									required 
-									placeholder="Enter the election start time... (e.g., hh:mm)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
-					<b-form-group class="create-form-control" id="form-enddate-edit-group" label="End Date" label-for="form-enddate-edit-input">
-						<b-form-input id="form-enddate-edit-input" 
-									type="text" 
-									v-model="editElectionForm.EndDate" 
-									required 
-									placeholder="Enter the election end date... (e.g., dd/MM/yyyy)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
-					<b-form-group class="create-form-control" id="form-endtime-edit-group" label="End Time" label-for="form-endtime-edit-input">
-						<b-form-input id="form-endtime-edit-input" 
-									type="text" 
-									v-model="editElectionForm.EndTime" 
-									required 
-									placeholder="Enter the election end time... (e.g., hh:mm)">
-						</b-form-input>
-						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
-						</span>
-						<b-small></b-small>
-					</b-form-group>
-
 					<b-form-group id="form-candidatesfile-edit-group" label="Candidates File" label-for="form-candidatesfile-edit-input">
 						<b-form-input id="form-candidatesfile-edit-input" 
 									type="text" 
@@ -294,6 +198,38 @@
 						</b-form-input>
 					</b-form-group>
 
+					<b-form-group class="create-form-control" id="form-begindate-edit-group" label="Start" label-for="form-begindate-edit-input">
+						<b-form-input id="form-begindate-edit-input" 
+									type="datetime-local"
+									:min="min"
+									v-model="editElectionForm.Start"
+									required>
+						</b-form-input>
+						<span class="exclamation">
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<span class="check">
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<b-small></b-small>
+					</b-form-group>
+
+					<b-form-group class="create-form-control" id="form-enddate-edit-group" label="End" label-for="form-enddate-edit-input">
+						<b-form-input id="form-enddate-edit-input" 
+							type="datetime-local"
+									:min="min"
+									v-model="editElectionForm.End"
+									required>
+						</b-form-input>
+						<span class="exclamation">
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<span class="check">
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<b-small></b-small>
+					</b-form-group>
+
 					<b-form-group class="create-form-control" id="form-password-edit-group" label="Master Password" label-for="form-password-edit-input">
 						<b-form-input id="form-password-edit-input" 
 									type="text" 
@@ -302,10 +238,10 @@
 									placeholder="Enter the board member master password...">
 						</b-form-input>
 						<span class="exclamation">
-							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 18px;"></font-awesome-icon>
 						</span>
 						<span class="check">
-							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 18px;"></font-awesome-icon>
 						</span>
 						<b-small></b-small>
 					</b-form-group>
@@ -323,29 +259,30 @@ import axios from 'axios';
 
 export default {
 	data() {
+		const now = new Date();
+		const year = now.getFullYear();
+		const month = String(now.getMonth() + 1).padStart(2, '0');
+		const day = String(now.getDate()).padStart(2, '0');
+
 		return {
 			elections: [],
 			createElectionForm: {
 				'Name': '',
 				'Description': '',
-				'StartDate': '',
-				'StartTime': '',
-				'EndDate': '',
-				'EndTime': '',
 				'CandidatesFile': '',
 				'VotersFile': '',
+				'Start': '',
+				'End': '',
 				'Password': ''
 			},
 			editElectionForm: {
 				'ID': '',
 				'Name': '',
 				'Description': '',
-				'StartDate': '',
-				'StartTime': '',
-				'EndDate': '',
-				'EndTime': '',
 				'CandidatesFile': '',
 				'VotersFile': '',
+				'Start': '',
+				'End': '',
 				'Password': ''
 			},
 			authEditElectionForm: {
@@ -354,7 +291,8 @@ export default {
 			toRemove: {
 				'ID': '',
 				'Operation': ''
-			}
+			},
+			min: `${year}-${month}-${day} 00:00`
 		};
 	},
 	message: '',
@@ -387,22 +325,18 @@ export default {
 		clearForm() {
 			this.createElectionForm.Name = '';
 			this.createElectionForm.Description = '';
-			this.createElectionForm.StartDate = '';
-			this.createElectionForm.StartTime = '';
-			this.createElectionForm.EndDate = '';
-			this.createElectionForm.EndTime = ''
 			this.createElectionForm.CandidatesFile = '';
 			this.createElectionForm.VotersFile = '';
+			this.createElectionForm.Start = '';
+			this.createElectionForm.End = '';
 			this.createElectionForm.Password = '';
 			this.editElectionForm.ID = '';
 			this.editElectionForm.Name = '';
 			this.editElectionForm.Description = '';
-			this.editElectionForm.StartDate = '';
-			this.editElectionForm.StartTime = '';
-			this.editElectionForm.EndDate = '';
-			this.editElectionForm.EndTime = ''
 			this.editElectionForm.CandidatesFile = '';
 			this.editElectionForm.VotersFile = '';
+			this.editElectionForm.Start = '';
+			this.editElectionForm.End = '';
 			this.editElectionForm.Password = '';
 		},
 
@@ -415,48 +349,81 @@ export default {
 			this.toRemove.Operation = '';
 		},
 
-		onSubmit(e) {
-			e.preventDefault();
-			
-			// this.checkInputs('create');
-			
-			this.$refs.createElectionModal.hide();
-			const payload = {
-				Name: this.createElectionForm.Name,
-				Description: this.createElectionForm.Description,
-				StartDate: this.createElectionForm.StartDate,
-				StartTime: this.createElectionForm.StartTime,
-				EndDate: this.createElectionForm.EndDate,
-				EndTime: this.createElectionForm.EndTime,
-				CandidatesFile: this.createElectionForm.CandidatesFile,
-				VotersFile: this.createElectionForm.VotersFile,
-				Password: this.createElectionForm.Password
-			};
-			this.createElection(payload);
-			this.clearForm();
+		checkInputs(modus) {
+
+			let startInput, endInput, passwordInput;
+
+			if (modus == 'create') {
+
+				startInput = document.getElementById('form-begindate-input');
+				endInput = document.getElementById('form-enddate-input');
+				passwordInput = document.getElementById('form-password-input');
+
+				let beginDate = new Date(this.createElectionForm.Start.split('T')[0]);
+				let endDate = new Date(this.createElectionForm.End.split('T')[0]);
+				
+				if (beginDate.getTime() == endDate.getTime()) {
+
+					let beginTime = new Date(this.createElectionForm.Start);
+					let endTime = new Date(this.createElectionForm.End);
+
+					if (beginTime >= endTime) {
+						this.setErrorFor(startInput, "Start time must be before the end.");
+						this.setErrorFor(endInput, "End time must be after the beginning.");
+					}
+				} else if (beginDate.getTime() > endDate.getTime()) {
+					this.setErrorFor(startInput, "Start date must be before the end.");
+					this.setErrorFor(endInput, "End date must be after the beginning.");
+				} else {
+					this.setSuccessFor(startInput);
+					this.setSuccessFor(endInput);
+				}
+
+				if (this.createElectionForm.Password.length < 8) 
+					this.setErrorFor(passwordInput, "Password must be at least 8 characters long.");
+				else
+					this.setSuccessFor(passwordInput);
+
+			} else if (modus == 'edit') {
+				
+				startInput = document.getElementById('form-begindate-edit-input');
+				endInput = document.getElementById('form-enddate-edit-input');
+				passwordInput = document.getElementById('form-password-edit-input');
+
+				let beginDate = new Date(this.editElectionForm.Start.split('T')[0]);
+				let endDate = new Date(this.editElectionForm.End.split('T')[0]);
+				
+				if (beginDate.getTime() == endDate.getTime()) {
+
+					let beginTime = new Date(this.editElectionForm.Start);
+					let endTime = new Date(this.editElectionForm.End);
+
+					if (beginTime >= endTime) {
+						this.setErrorFor(startInput, "Start time must be before the end.");
+						this.setErrorFor(endInput, "End time must be after the beginning.");
+					}
+				} else if (beginDate.getTime() > endDate.getTime()) {
+					this.setErrorFor(startInput, "Start date must be before the end.");
+					this.setErrorFor(endInput, "End date must be after the beginning.");
+				} else {
+					this.setSuccessFor(startInput);
+					this.setSuccessFor(endInput);
+				}
+
+				if (this.editElectionForm.Password.length < 8) 
+					this.setErrorFor(passwordInput, "Password must be at least 8 characters long.");
+				else
+					this.setSuccessFor(passwordInput);
+			}
+
+			const formControls = document.querySelectorAll('.create-form-control');
+
+			const formIsValid = [...formControls].every(formControl => {
+				return (formControl.className != 'create-form-control error');
+			});
+
+			return formIsValid;
 		},
-
-		// checkInputs(modus) {
-
-		// 	let startDateInput, startTimeInput, endDateInput, endTimeInput, passwordInput;
-			
-		// 	if (modus == 'create') {
-		// 		startDateInput = document.getElementById('form-begindate-input');
-		// 		startTimeInput = document.getElementById('form-starttime-input');
-		// 		endDateInput = document.getElementById('form-enddate-input');
-		// 		endTimeInput = document.getElementById('form-endtime-input');
-		// 		passwordInput = document.getElementById('form-password-input');
-		// 	} else if (modus == 'edit') {
-		// 		startDateInput = document.getElementById('form-begindate-edit-input');
-		// 		startTimeInput = document.getElementById('form-starttime-edit-input');
-		// 		endDateInput = document.getElementById('form-enddate-edit-input');
-		// 		endTimeInput = document.getElementById('form-endtime-edit-input');
-		// 		passwordInput = document.getElementById('form-password-edit-input');
-		// 	}
-
-		// 	if (this.createElectionForm.StartTime == 'test') 
-		// 		this.setErrorFor(startTimeInput, 'lorem ipsum heren');
-		// },
 
 		setSuccessFor(field) {
 
@@ -475,6 +442,36 @@ export default {
 
 			formControl.className = 'create-form-control error';
 			small.innerText = message;
+		},
+
+		onSubmit(e) {
+			e.preventDefault();
+			
+			let check = this.checkInputs('create');
+			
+			if (check) {
+				this.$refs.createElectionModal.hide();
+
+				// Date original format --> yyyy-mm-ddTHH:mm
+				let beginDate = new Date(this.createElectionForm.Start).toLocaleDateString('pt-BR');
+				let endDate = new Date(this.createElectionForm.End).toLocaleDateString('pt-BR');
+				let beginTime = this.createElectionForm.Start.split('T')[1];
+				let endTime = this.createElectionForm.End.split('T')[1];
+
+				const payload = {
+					Name: this.createElectionForm.Name,
+					Description: this.createElectionForm.Description,
+					CandidatesFile: this.createElectionForm.CandidatesFile,
+					VotersFile: this.createElectionForm.VotersFile,
+					StartDate: beginDate,
+					StartTime: beginTime,
+					EndDate: endDate,
+					EndTime: endTime,
+					Password: this.createElectionForm.Password
+				};
+				this.createElection(payload);
+				this.clearForm();
+			}
 		},
 
 		onReset(e) {
@@ -500,20 +497,31 @@ export default {
 
 		onSubmitUpdate(e) {
 			e.preventDefault();
-			this.$refs.editElectionModal.hide();
-			const payload = {
-				Name: this.editElectionForm.Name,
-				Description: this.editElectionForm.Description,
-				StartDate: this.editElectionForm.StartDate,
-				StartTime: this.editElectionForm.StartTime,
-				EndDate: this.editElectionForm.EndDate,
-				EndTime: this.editElectionForm.EndTime,
-				CandidatesFile: this.editElectionForm.CandidatesFile,
-				VotersFile: this.editElectionForm.VotersFile,
-				Password: this.editElectionForm.Password
-			};
-			this.updateElection(payload, this.editElectionForm.ID);
-			this.clearForm();
+			
+			let check = this.checkInputs('edit');
+			
+			if (check) {
+				this.$refs.editElectionModal.hide();
+
+				let beginDate = new Date(this.editElectionForm.Start).toLocaleDateString('pt-BR');
+				let endDate = new Date(this.editElectionForm.End).toLocaleDateString('pt-BR');
+				let beginTime = this.editElectionForm.Start.split('T')[1];
+				let endTime = this.editElectionForm.End.split('T')[1];
+
+				const payload = {
+					Name: this.editElectionForm.Name,
+					Description: this.editElectionForm.Description,
+					CandidatesFile: this.editElectionForm.CandidatesFile,
+					VotersFile: this.editElectionForm.VotersFile,
+					StartDate: beginDate,
+					StartTime: beginTime,
+					EndDate: endDate,
+					EndTime: endTime,
+					Password: this.editElectionForm.Password
+				};
+				this.updateElection(payload, this.editElectionForm.ID);
+				this.clearForm();
+			}
 		},
 
 		onResetUpdate(e) {
@@ -613,7 +621,7 @@ a {
 	color: #e74c3c;
 	position: relative;
 	bottom: 33px;
-	left: 225px;
+	left: 228px;
     visibility: visible;
 }
 .create-form-control .check {
@@ -623,7 +631,7 @@ a {
 	color: #73ff00;
 	position: relative;
 	bottom: 33px;
-	left: 200px;
+	left: 206px;
     visibility: visible;
 }
 .create-form-control.success input {
@@ -635,7 +643,7 @@ a {
 .create-form-control b-small {
 	font-size: 14px;
     position: absolute;
-	left: 35%;
+	left: 5%;
     margin-top: 5px;
     visibility: hidden;
 }
