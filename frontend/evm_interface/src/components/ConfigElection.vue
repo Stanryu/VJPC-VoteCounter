@@ -33,8 +33,8 @@
 								<td>{{ election.Name }}</td>
 								<td>{{ election.Description }}</td>
 								<td>{{ election.Quantity }}</td>
-								<td>{{ election.StartDate }} {{ election.StartTime }}</td>
-								<td>{{ election.EndDate }} {{ election.EndTime }}</td>
+								<td>{{ election.StartDate }} | {{ election.StartTime }}</td>
+								<td>{{ election.EndDate }} | {{ election.EndTime }}</td>
 								<td>{{ election.Fingerprint }}</td>
 								<td>
 									<div class="btn-group" role="group">
@@ -122,7 +122,7 @@
 
 					<b-form-group class="create-form-control" id="form-password-group" label="Master Password" label-for="form-password-input">
 						<b-form-input id="form-password-input" 
-									type="text" 
+									type="password" 
 									v-model="createElectionForm.Password" 
 									required 
 									placeholder="Enter the board member master password...">
@@ -146,7 +146,7 @@
 					
 					<b-form-group id="form-auth-edit-group" label="Password" label-for="form-auth-edit-input">
 						<b-form-input id="form-auth-edit-input" 
-									type="text" 
+									type="password" 
 									v-model="authEditElectionForm.Password" 
 									required 
 									placeholder="Enter your master password...">
@@ -232,7 +232,7 @@
 
 					<b-form-group class="create-form-control" id="form-password-edit-group" label="Master Password" label-for="form-password-edit-input">
 						<b-form-input id="form-password-edit-input" 
-									type="text" 
+									type="password" 
 									v-model="editElectionForm.Password" 
 									required 
 									placeholder="Enter the board member master password...">
@@ -612,6 +612,11 @@ li {
 }
 a {
   color: #42b983;
+}
+.jumbotron {
+	position: absolute;
+	width: 90%;
+	left: 5%;
 }
 /* Error messages and styling on inputs */
 .create-form-control .exclamation {
