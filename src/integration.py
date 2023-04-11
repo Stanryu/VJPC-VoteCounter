@@ -296,8 +296,9 @@ def all_elections():
 
             ELECTIONS.append(each_election)
 
-        response_object['elections'] = ELECTIONS.copy()
-        # response_object['elections'] = sorted(ELECTIONS.copy(), key=itemgetter('Begin Date'))
+        app_elections = sorted(ELECTIONS.copy(), key=itemgetter('StartDate', 'StartTime'))
+        app_elections.reverse()
+        response_object['elections'] = app_elections
         ELECTIONS.clear()
 
     return jsonify(response_object)
@@ -350,6 +351,60 @@ def remove_election(election_id):
 
     remove(f'{getcwd()}media/julio/7A2F-BA93/Private Keys/{election_id}_privateKey.pem')
     chdir(current_dir)
+
+
+@app.route('/voting', methods=['GET', 'POST'])
+def show_elections():
+    
+    response_object = {'status': 'success'}
+    
+    if request.method == 'POST':
+        post_data = request.get_json()
+
+        message = post_data.get('Password')
+        
+        h = HMAC.new(bytes(secret, 'utf-8'), digestmod=SHA256)
+        h.update(bytes(message, 'utf-8'))
+
+        try:
+            h.verify(tag)
+            response_object = {'status': 'success'}
+            response_object['message'] = 'Authentication Successful!'
+        except ValueError:
+            response_object = {'status': 'failed'}
+            response_object['message'] = 'Authentication Failed!'
+    
+    elif request.method == 'GET':
+        
+        election_reports = listdir(f'{current_dir}{general_data}{stat}{output}')
+
+        for report in election_reports:
+
+            each_election = dict()
+            with open(f'{current_dir}{general_data}{stat}{output}{report}', 'r') as file1:
+                election_data = json.load(file1)
+
+                each_election['ID'] = election_data['ID']
+                each_election['Name'] = election_data['Name']
+                each_election['Description'] = election_data['Description']
+                each_election['Quantity'] = len(election_data['Cargos'])
+                each_election['StartDate'] = election_data['Begin Date']
+                each_election['StartTime'] = election_data['Begin Time']
+                each_election['EndDate'] = election_data['End Date']
+                each_election['EndTime'] = election_data['End Time']
+
+                with open(f'{current_dir}{general_data}{stat}{fingerprints}{election_data["ID"]}_fingerprint.json', 'r') as file2:
+                    finprint = json.load(file2)
+                    each_election['Fingerprint'] = finprint['Fingerprint']
+
+            ELECTIONS.append(each_election)
+
+        app_elections = sorted(ELECTIONS.copy(), key=itemgetter('StartDate', 'StartTime'))
+        app_elections.reverse()
+        response_object['elections'] = app_elections
+        ELECTIONS.clear()
+
+    return jsonify(response_object)
 
 
 if __name__ == '__main__':
