@@ -33,13 +33,13 @@
 								<td>{{ election.Name }}</td>
 								<td>{{ election.Description }}</td>
 								<td>{{ election.Quantity }}</td>
-								<td>{{ election.StartDate }} | {{ election.StartTime }}</td>
-								<td>{{ election.EndDate }} | {{ election.EndTime }}</td>
+								<td>{{ election.StartDate }}<br>{{ election.StartTime }}</td>
+								<td>{{ election.EndDate }}<br>{{ election.EndTime }}</td>
 								<td>{{ election.Fingerprint }}</td>
 								<td>
 									<div class="btn-group" role="group">
-										<button type="button" class="btn btn-info btn-sm" v-b-modal.authenticate-edit @click="editElection(election)">Update</button>
-										<button type="button" class="btn btn-danger btn-sm" v-b-modal.authenticate-edit @click="deleteElection(election)">Delete</button>
+										<button type="button" class="btn btn-info btn-sm" @click="editElection(election)">Update</button>
+										<button type="button" class="btn btn-danger btn-sm" @click="deleteElection(election)">Delete</button>
 									</div>
 								</td>
 							</tr>
@@ -359,21 +359,15 @@ export default {
 				endInput = document.getElementById('form-enddate-input');
 				passwordInput = document.getElementById('form-password-input');
 
-				let beginDate = new Date(this.createElectionForm.Start.split('T')[0]);
-				let endDate = new Date(this.createElectionForm.End.split('T')[0]);
-				
-				if (beginDate.getTime() == endDate.getTime()) {
+				let beginDate = new Date(this.createElectionForm.Start);
+				let endDate = new Date(this.createElectionForm.End);
 
-					let beginTime = new Date(this.createElectionForm.Start);
-					let endTime = new Date(this.createElectionForm.End);
-
-					if (beginTime >= endTime) {
-						this.setErrorFor(startInput, "Start time must be before the end.");
-						this.setErrorFor(endInput, "End time must be after the beginning.");
-					}
-				} else if (beginDate.getTime() > endDate.getTime()) {
+				if (beginDate.getTime() >= endDate.getTime()) {
 					this.setErrorFor(startInput, "Start date must be before the end.");
 					this.setErrorFor(endInput, "End date must be after the beginning.");
+				} else if (beginDate.getTime() <= new Date()) {
+					this.setErrorFor(startInput, "Start date must be in the future.");
+					this.setErrorFor(endInput, "End date must be in the future.");
 				} else {
 					this.setSuccessFor(startInput);
 					this.setSuccessFor(endInput);
@@ -390,21 +384,15 @@ export default {
 				endInput = document.getElementById('form-enddate-edit-input');
 				passwordInput = document.getElementById('form-password-edit-input');
 
-				let beginDate = new Date(this.editElectionForm.Start.split('T')[0]);
-				let endDate = new Date(this.editElectionForm.End.split('T')[0]);
+				let beginDate = new Date(this.editElectionForm.Start);
+				let endDate = new Date(this.editElectionForm.End);
 				
-				if (beginDate.getTime() == endDate.getTime()) {
-
-					let beginTime = new Date(this.editElectionForm.Start);
-					let endTime = new Date(this.editElectionForm.End);
-
-					if (beginTime >= endTime) {
-						this.setErrorFor(startInput, "Start time must be before the end.");
-						this.setErrorFor(endInput, "End time must be after the beginning.");
-					}
-				} else if (beginDate.getTime() > endDate.getTime()) {
+				if (beginDate.getTime() >= endDate.getTime()) {
 					this.setErrorFor(startInput, "Start date must be before the end.");
 					this.setErrorFor(endInput, "End date must be after the beginning.");
+				} else if (beginDate.getTime() <= new Date()) {
+					this.setErrorFor(startInput, "Start date must be in the future.");
+					this.setErrorFor(endInput, "End date must be in the future.");
 				} else {
 					this.setSuccessFor(startInput);
 					this.setSuccessFor(endInput);
@@ -478,6 +466,7 @@ export default {
 			e.preventDefault();
 			this.$refs.createElectionModal.hide();
 			this.clearForm();
+			this.getElections();
 		},
 
 		onSubmitAuth(e) {
@@ -493,6 +482,7 @@ export default {
 			e.preventDefault();
 			this.$refs.authenticateEdit.hide();
 			this.clearPswd();
+			this.getElections();
 		},
 
 		onSubmitUpdate(e) {
@@ -535,6 +525,7 @@ export default {
 			const path = 'http://localhost:5000';
 			axios.post(path, payload)
 			.then((res) => {
+				
 				if (res.data['status'] == 'success' && this.toRemove.Operation == '') {
 					this.$refs.authenticateEdit.hide();
 					this.$refs.editElectionModal.show();
@@ -565,9 +556,16 @@ export default {
 		},
 
 		editElection(election) {
-			this.editElectionForm = election;
+			
+			let splitDate = election.StartDate.split('/')
+			let formattedDate = `${splitDate[2]}-${splitDate[1]}-${splitDate[0]}T${election.StartTime}`;
+			
+			if (new Date(formattedDate) > new Date()) {
+				this.editElectionForm = election;
+				this.$refs.authenticateEdit.show();
+			}
 		},
-
+		
 		removeElection(electionID) {
 			const path = `http://localhost:5000/${electionID}`;
 			axios.delete(path)
@@ -583,8 +581,15 @@ export default {
 		},
 
 		deleteElection(election) {
-			this.toRemove['ID'] = election.ID;
-			this.toRemove['Operation'] = 'D';
+
+			let splitDate = election.StartDate.split('/')
+			let formattedDate = `${splitDate[2]}-${splitDate[1]}-${splitDate[0]}T${election.StartTime}`;
+
+			if (new Date(formattedDate) > new Date()) {
+				this.toRemove['ID'] = election.ID;
+				this.toRemove['Operation'] = 'D';
+				this.$refs.authenticateEdit.show();
+			}
 		}
 	},
 	created() {
