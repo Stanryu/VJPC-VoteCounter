@@ -1,6 +1,7 @@
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Util.py3compat import tobytes
 from digitalSignatureEG import keys_generator
+from Cryptodome.Protocol.KDF import scrypt
 from geradorBoletas import adicionaLogo
 from geradorBoletas import geraBoleta
 from Cryptodome.Hash import SHA256
@@ -24,41 +25,7 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 CORS(app, resources={r'/*': {'origins': 'http://localhost:8080'}})
 
-ELECTIONS = [
-    {
-    'ID': uuid.uuid4().hex,
-    'Name': 'Presidential',
-    'Description': 'National',
-    'Quantity': '3',
-    'StartDate': '07/03/2023', 
-    'StartTime': '08:00',
-    'EndDate': '07/03/2023',
-    'EndTime': '17:00',
-    'Fingerprint': '1ej829u&a'
-    },
-    {
-    'ID': uuid.uuid4().hex,
-    'Name': 'Congress',
-    'Description': 'National',
-    'Quantity': '594',
-    'StartDate': '26/03/2023', 
-    'StartTime': '12:00',
-    'EndDate': '28/03/2023',
-    'EndTime': '12:00',
-    'Fingerprint': '(*!XMe21)'
-    },
-    {
-    'ID': uuid.uuid4().hex,
-    'Name': 'Academic Center',
-    'Description': 'Small',
-    'Quantity': '1',
-    'StartDate': '14/04/2023',
-    'StartTime': '08:00',
-    'EndDate': '14/04/2023',
-    'EndTime': '09:00',
-    'Fingerprint': '@*Ye9*@Uecm)'
-    }
-]
+ELECTIONS = list()
 
 cipher_name = 'EL GAMAL '
 p_type = cipher_name + 'PRIME P'
@@ -68,7 +35,7 @@ x_type = cipher_name + 'PRIVATE KEY'
 y_type = cipher_name + 'PUBLIC KEY'
 
 
-def exporting(election_id):
+def exporting(election_id, password):
 
     p, q, g, x, y = keys_generator()
 
@@ -81,6 +48,23 @@ def exporting(election_id):
     chdir('..')
     if not isdir(getcwd() + 'media/julio/7A2F-BA93/Private Keys/'):
         mkdir(getcwd() + 'media/julio/7A2F-BA93/Private Keys/')
+
+    member_data, board_member, export_member = dict(), dict(), list()
+    with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_masterPassword.json', 'w') as file:
+        
+        salt = get_random_bytes(16)
+        password_key = scrypt(private_key, salt, 16, N=2**14, r=8, p=1)
+
+        h = HMAC.new(password_key, digestmod=SHA256)
+        tag = h.update(bytes(password, 'utf-8'))
+
+        member_data['Salt'] = str(salt)
+        member_data['Tag'] = str(tag.digest())
+        export_member.append(member_data)
+        board_member['Board Member'] = export_member
+
+        board_json = json.dumps(board_member, indent=4)
+        file.write(board_json)
 
     # CHANGE PEM DIR TO EXECUTE
     # chdir(str(Path.home()))
@@ -120,12 +104,10 @@ def exporting(election_id):
     
     return base64.b64encode(p_b), base64.b64encode(q_b), base64.b64encode(g_b), base64.b64encode(y_b)
 
-# Must be 32 bytes or longer
-secret = 'Validate'
-tag = b'\xdb\xe6\xba\xdb\x91\xc72\xf7M!\xbb\x9ck\x8e/\xaaO\xc2\x8f}"\x1b\xc7*\xfcBO\x15\xac\x96\xf3^'
 
-
-def config_election(election_id, election_name, description, begin_date, begin_time, end_date, end_time, candidates_file, voters_file):
+def config_election(election_id, election_name, description,
+                    begin_date, begin_time, end_date, end_time,
+                    candidates_file, voters_file, password):
 
     json_config_report, json_config_info = dict(), dict()
     dict_list, voters_list, cargo_generate, digits_generate = list(), list(), list(), list()
@@ -149,7 +131,7 @@ def config_election(election_id, election_name, description, begin_date, begin_t
 
         aux_dict = dict()
         aux_dict['Ordem'] = i + 1
-        aux_dict['Digitos'] = len(str(candidates_data['Candidatos'][0][candidates_names[i]][0]['Number']))
+        aux_dict['Digitos'] = len(str(candidates_data['Candidatos'][0][candidates_names[i]][0]['Number'])) # TODO: Refact this!
         aux_dict['Nome'] = candidates_names[i]
 
         dict_list.append(aux_dict)
@@ -177,7 +159,7 @@ def config_election(election_id, election_name, description, begin_date, begin_t
         control_list.append(v_control.copy())
 
     # Criação da chave pública da eleição
-    prime_p, prime_q, base_g, public_key = exporting(election_id)
+    prime_p, prime_q, base_g, public_key = exporting(election_id, password)
     key_dict = dict()
     key_dict['Prime P'] = prime_p.decode('utf-8')
     key_dict['Prime Q'] = prime_q.decode('utf-8')
@@ -239,20 +221,46 @@ def all_elections():
 
     if request.method == 'POST':
         post_data = request.get_json()
-
-        if len(post_data) == 1:
+        print(f'------{post_data}-------')
+        print(post_data)
+        if len(post_data) == 2:
+            
+            election_id = post_data.get('ID')
             message = post_data.get('Password')
-        
-            h = HMAC.new(bytes(secret, 'utf-8'), digestmod=SHA256)
-            h.update(bytes(message, 'utf-8'))
 
-            try:
-                h.verify(tag)
-                response_object = {'status': 'success'}
-                response_object['message'] = 'Authentication Successful!'
-            except ValueError:
-                response_object = {'status': 'failed'}
-                response_object['message'] = 'Authentication Failed!'
+            chdir(str(Path.home()))
+            chdir('..')
+            chdir('..')
+
+            with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_privateKey.pem', 'r') as pk_file:
+                with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_masterPassword.json', 'r') as pswd_file:
+                    
+                    sign_key = pk_file.read().encode()
+
+                    data = json.load(pswd_file)
+                    salt = data['Board Member'][0]['Salt']
+                    tag = data['Board Member'][0]['Tag']
+
+                    salt = salt.removesuffix("'")
+                    salt = salt.removeprefix("b'")
+                    salt = salt.encode()
+                    tag = tag.removesuffix("'")
+                    tag = tag.removeprefix("b'")
+                    tag = tag.encode()
+
+                    password_key = scrypt(sign_key, salt.decode('unicode-escape').encode('ISO-8859-1'), 16, N=2**14, r=8, p=1)
+                    h = HMAC.new(password_key, digestmod=SHA256)
+                    h.update(bytes(message, 'utf-8'))
+
+                    try:
+                        h.verify(tag.decode('unicode-escape').encode('ISO-8859-1'))
+                        response_object = {'status': 'success'}
+                        response_object['message'] = 'Authentication Successful!'
+                    except ValueError:
+                        response_object = {'status': 'failed'}
+                        response_object['message'] = 'Authentication Failed!'
+
+            chdir(current_dir)
 
         else:
             election_id = uuid.uuid1().hex
@@ -264,10 +272,11 @@ def all_elections():
             end_time = post_data.get('EndTime')
             candidates_file = f'{post_data.get("CandidatesFile")}.json'
             voters_file = f'{post_data.get("VotersFile")}.json'
+            password = post_data.get('Password')
 
             config_election(election_id, election_name, description, 
                             begin_date, begin_time, end_date, end_time, 
-                            candidates_file, voters_file)
+                            candidates_file, voters_file, password)
 
             response_object['message'] = 'Election Created!'
     
@@ -322,14 +331,16 @@ def single_election(election_id):
         end_time = put_data.get('EndTime')
         candidates_file = f'{put_data.get("CandidatesFile")}.json'
         voters_file = f'{put_data.get("VotersFile")}.json'
+        password = put_data.get('Password')
 
         config_election(election_id, election_name, description, 
                         begin_date, begin_time, end_date, end_time, 
-                        candidates_file, voters_file)
+                        candidates_file, voters_file, password)
 
         response_object['message'] = 'Election Updated!'
 
     elif request.method == 'DELETE':
+        print(election_id)
         remove_election(election_id)
         response_object['message'] = 'Election Removed!'
 
@@ -350,29 +361,55 @@ def remove_election(election_id):
     chdir('..')
 
     remove(f'{getcwd()}media/julio/7A2F-BA93/Private Keys/{election_id}_privateKey.pem')
+    remove(f'{getcwd()}media/julio/7A2F-BA93/Private Keys/{election_id}_masterPassword.json')
+    
     chdir(current_dir)
 
 
 @app.route('/voting', methods=['GET', 'POST'])
 def show_elections():
-    
+
     response_object = {'status': 'success'}
     
     if request.method == 'POST':
-        post_data = request.get_json()
 
+        post_data = request.get_json()
+        voter_id = post_data.get('ID')
         message = post_data.get('Password')
         
-        h = HMAC.new(bytes(secret, 'utf-8'), digestmod=SHA256)
-        h.update(bytes(message, 'utf-8'))
+        # chdir(str(Path.home()))
+        # chdir('..')
+        # chdir('..')
 
-        try:
-            h.verify(tag)
-            response_object = {'status': 'success'}
-            response_object['message'] = 'Authentication Successful!'
-        except ValueError:
-            response_object = {'status': 'failed'}
-            response_object['message'] = 'Authentication Failed!'
+        # with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_privateKey.pem', 'r') as pk_file:
+        #     with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_masterPassword.json', 'r') as pswd_file:
+                
+        #         sign_key = pk_file.read().encode()
+
+        #         data = json.load(pswd_file)
+        #         salt = data['Board Member'][0]['Salt']
+        #         tag = data['Board Member'][0]['Tag']
+
+        #         salt = salt.removesuffix("'")
+        #         salt = salt.removeprefix("b'")
+        #         salt = salt.encode()
+        #         tag = tag.removesuffix("'")
+        #         tag = tag.removeprefix("b'")
+        #         tag = tag.encode()
+
+        #         password_key = scrypt(sign_key, salt.decode('unicode-escape').encode('ISO-8859-1'), 16, N=2**14, r=8, p=1)
+        #         h = HMAC.new(password_key, digestmod=SHA256)
+        #         h.update(bytes(message, 'utf-8'))
+
+        #         try:
+        #             h.verify(tag.decode('unicode-escape').encode('ISO-8859-1'))
+        #             response_object = {'status': 'success'}
+        #             response_object['message'] = 'Authentication Successful!'
+        #         except ValueError:
+        #             response_object = {'status': 'failed'}
+        #             response_object['message'] = 'Authentication Failed!'
+
+        # chdir(current_dir)
     
     elif request.method == 'GET':
         
