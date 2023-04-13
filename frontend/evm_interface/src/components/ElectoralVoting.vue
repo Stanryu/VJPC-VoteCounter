@@ -10,7 +10,7 @@
 				<div class="col-sm-12">
 					<h2 class="text-center bg-primary text-white">Vote</h2>
 					<hr><br>
-					
+
 					<table class="table table-hover">
 						<thead>
 							<tr>
@@ -72,6 +72,9 @@
 
 			<b-modal ref="votingModal" id="vote-modal" title="Enter your vote" hide-footer>
 					<!-- <b-form @submit="onSubmit" @reset="onReset" class="w-100 text-center"> -->
+					
+				<input class="vote" disabled :value="input">
+				<br><br><br><br>
 
 				<div class="urn-keyboard">
 
@@ -113,6 +116,8 @@
 
 <script>
 import axios from 'axios';
+import confirmAudio from '../assets/confirm.wav';
+import keyAudio from '../assets/key.wav';
 
 export default {
 	data() {
@@ -121,7 +126,8 @@ export default {
 			authVoteElectionForm: {
 				'Password': '',
 				'ID': ''
-			}
+			},
+			input: ''
 		};
 	},
 	methods: {
@@ -130,29 +136,33 @@ export default {
 			axios.get(path)
 			.then((res) => {
 				this.elections = res.data.elections;
-				console.log(this.elections);
 			})
 			.catch((err) => {
 				alert(err);
 			});
 		},
+
 		clearPswd() {
 			this.authVoteElectionForm.Password = '';
 			this.authVoteElectionForm.ID = '';
 		},
+
 		onSubmitAuth(e) {
 			e.preventDefault();
 			const payload = {
+				ID: this.authVoteElectionForm.ID,
 				Password: this.authVoteElectionForm.Password
 			};
 			this.authenticateBoardMember(payload);
 			this.clearPswd();
 		},
+
 		onResetAuth(e) {
 			e.preventDefault();
-			this.$refs.authenticateEdit.hide();
+			this.$refs.authenticateVote.hide();
 			this.clearPswd();
 		},
+
 		authenticateBoardMember(payload) {
 			const path = 'http://localhost:5000/voting';
 			axios.post(path, payload)
@@ -166,7 +176,30 @@ export default {
 				alert(err);
 				this.getElections();
 			});
-		}
+		},
+
+		addNumber(digit) {
+			this.input += String(digit);
+			let audio = new Audio(keyAudio);
+			audio.play();
+		},
+
+		blankVote() {
+			this.input = '';
+			let audio = new Audio(keyAudio);
+			audio.play();
+		},
+
+		reviseVote() {
+			this.input = '';
+			let audio = new Audio(keyAudio);
+			audio.play();
+		},
+
+		confirmVote() {
+			let audio = new Audio(confirmAudio);
+			audio.play();
+		},
 	},
 	created() {
 		this.getElections();
@@ -178,7 +211,18 @@ export default {
 ::v-deep #vote-modal > .modal-dialog {
 	max-width: 80%;
 	max-height: 100%;
-} 
+}
+.jumbotron {
+	position: absolute;
+	width: 90%;
+	left: 5%;
+}
+.vote {
+	text-align: center;
+	font-size: 30px;
+	position: absolute;
+	left: 37%;
+}
 /* TODO: Clean keyboard stylization */
 .urn-keyboard {
 	margin: 0 auto;
@@ -231,22 +275,28 @@ export default {
 	height: 35px;
 }
 }
+h1 {
+	text-align: center;
+}
 h2 {
 	padding: 15px;
 	border-radius: 10px;
 }
 h3 {
-  margin: 40px 0 0;
+	margin: 40px 0 0;
 }
 ul {
-  list-style-type: none;
-  padding: 0;
+	list-style-type: none;
+	padding: 0;
 }
 li {
-  display: inline-block;
-  margin: 0 10px;
+	display: inline-block;
+	margin: 0 10px;
 }
 a {
-  color: #42b983;
+	color: #42b983;
+}
+button:hover {
+	opacity: 0.8;
 }
 </style>
