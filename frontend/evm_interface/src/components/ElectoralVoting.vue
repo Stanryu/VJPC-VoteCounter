@@ -1,6 +1,7 @@
 <template>
 
 <div class="container">
+	
 		<div class="jumbotron vertical-center">
 			
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lux/bootstrap.min.css" 
@@ -23,8 +24,8 @@
 								<th scope="col">Actions</th>
 							</tr>
 						</thead>
-						<tbody>
-							<tr v-for="election, index in elections" :key="index">
+						<tbody v-for="election, index in elections" :key="index">
+							<tr v-if="inProgress(election)">
 								<td>{{ election.Name }}</td>
 								<td>{{ election.Description }}</td>
 								<td>{{ election.Quantity }}</td>
@@ -33,35 +34,52 @@
 								<td>{{ election.Fingerprint }}</td>
 								<td>
 									<div class="btn-group" role="group">
-										<button type="button" class="btn btn-success btn-sm" v-b-modal.authenticate-vote>Vote</button>	
+										<button type="button" class="btn btn-success btn-sm" v-b-modal.authenticate-vote 
+										@click="informElection(election)">Vote</button>	
 									</div>
 								</td>
 							</tr>
 						</tbody>
 					</table>
-					<footer class="bg-primary text-white text-center" style="border-radius: 10px;">Copyright &copy;. All Rights Reserved 2023.</footer>
+					<footer class="bg-primary text-white text-center" style="border-radius: 10px;">
+						Copyright &copy;. All Rights Reserved 2023.
+					</footer>
 				</div>
 			</div>
 
 			<b-modal ref="authenticateVote" id="authenticate-vote" title="Authentication" hide-backdrop hide-footer>
 				<b-form @submit="onSubmitAuth" @reset="onResetAuth" class="w-100 text-center">
 					
-					<b-form-group id="form-auth-pswd-group" label="Password" label-for="form-auth-pswd-input">
+					<b-form-group class="create-form-control" id="form-auth-pswd-group" label="Password" label-for="form-auth-pswd-input">
 						<b-form-input id="form-auth-pswd-input" 
-									type="text" 
+									type="password" 
 									v-model="authVoteElectionForm.Password" 
 									required 
 									placeholder="Enter your master password...">
 						</b-form-input>
+						<span class="exclamation">
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<span class="check">
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<b-small></b-small>
 					</b-form-group>
 
-					<b-form-group id="form-auth-id-group" label="Voter ID" label-for="form-auth-id-input">
-						<b-form-input id="form-auth-id-input" 
-									type="text" 
+					<b-form-group class="create-form-control" id="form-auth-id-group" label="Voter's ID" label-for="form-auth-id-input">
+						<b-form-input id="form-auth-id-input"
+									v-mask="'###.###.###-##'"
 									v-model="authVoteElectionForm.ID" 
 									required 
 									placeholder="Enter the voter's unique ID...">
 						</b-form-input>
+						<span class="exclamation">
+							<font-awesome-icon icon="fas fa-exclamation-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<span class="check">
+							<font-awesome-icon icon="fas fa-check-circle" style="height: 20px;"></font-awesome-icon>
+						</span>
+						<b-small></b-small>
 					</b-form-group>
 
 					<b-button type="submit" variant="outline-success">Authenticate</b-button>
@@ -72,9 +90,26 @@
 
 			<b-modal ref="votingModal" id="vote-modal" title="Enter your vote" hide-footer>
 					<!-- <b-form @submit="onSubmit" @reset="onReset" class="w-100 text-center"> -->
-					
-				<input class="vote" disabled :value="input">
-				<br><br><br><br>
+				
+				<!-- <vue-otp-2
+					length="8"
+					inputmode="numeric"
+					pattern="[0-9]"
+				/> -->
+
+				<div class="otp-input" style="display: flex; flex-direction: row;">
+				<v-otp-input
+					ref="otpInput"
+					input-classes="otp-input"
+					separator="-"
+					:num-inputs="4"
+					:should-auto-focus="true"
+					:is-input-num="true"
+				/>
+				</div>
+
+				<hr>
+				<br><br>
 
 				<div class="urn-keyboard">
 
@@ -125,11 +160,13 @@ export default {
 			elections: [],
 			authVoteElectionForm: {
 				'Password': '',
-				'ID': ''
+				'ID': '',
+				'ElectionID': ''
 			},
 			input: ''
 		};
 	},
+	
 	methods: {
 		getElections() {
 			const path = 'http://localhost:5000/voting';
@@ -147,10 +184,25 @@ export default {
 			this.authVoteElectionForm.ID = '';
 		},
 
+		inProgress(election) {
+			
+			let start = election.StartDate.split('/')
+			let beginDate = `${start[2]}-${start[1]}-${start[0]}T${election.StartTime}`;
+
+			let end = election.EndDate.split('/')
+			let endDate = `${end[2]}-${end[1]}-${end[0]}T${election.EndTime}`;
+
+			if (new Date(beginDate) <= new Date() && new Date(endDate) >= new Date()) 
+				return true;
+			else 
+				return false;
+		},
+
 		onSubmitAuth(e) {
 			e.preventDefault();
 			const payload = {
-				ID: this.authVoteElectionForm.ID,
+				ElectionID: this.authVoteElectionForm.ElectionID,
+				ID: this.authVoteElectionForm.ID.replace(/[-.]/g, ''),
 				Password: this.authVoteElectionForm.Password
 			};
 			this.authenticateBoardMember(payload);
@@ -167,9 +219,39 @@ export default {
 			const path = 'http://localhost:5000/voting';
 			axios.post(path, payload)
 			.then((res) => {
-				if (res.data['status'] == 'success') {
+
+				let passwordInput = document.getElementById('form-auth-pswd-input');
+				let voterInput = document.getElementById('form-auth-id-input');
+				
+				if (res.data['status'] == 'success' && res.data['Voter'] == 'Enabled') 
+				{
 					this.$refs.authenticateVote.hide();
 					this.$refs.votingModal.show();
+				} 
+				else if (res.data['status'] == 'success' && res.data['Voter'] == 'Disabled') 
+				{
+					this.setSuccessFor(passwordInput);
+					this.setErrorFor(voterInput, 'Voter already voted.');
+				}
+				else if (res.data['status'] == 'success' && res.data['Voter'] == 'Ghost')
+				{
+					this.setSuccessFor(passwordInput);
+					this.setErrorFor(voterInput, 'Voter not registered.');
+				}
+				else if (res.data['status'] == 'failed' && res.data['Voter'] == 'Enabled')
+				{
+					this.setErrorFor(passwordInput, 'Incorrect password.');
+					this.setSuccessFor(voterInput);
+				}
+				else if (res.data['status'] == 'failed' && res.data['Voter'] == 'Disabled')
+				{
+					this.setErrorFor(passwordInput, 'Incorrect password.');
+					this.setErrorFor(voterInput, 'Voter already voted.');
+				}
+				else if (res.data['status'] == 'failed' && res.data['Voter'] == 'Ghost')
+				{
+					this.setErrorFor(passwordInput, 'Incorrect password.');
+					this.setErrorFor(voterInput, 'Voter not registered.');
 				}
 			})
 			.catch((err) => {
@@ -177,21 +259,25 @@ export default {
 				this.getElections();
 			});
 		},
-
+		// eslint-disable-next-line
 		addNumber(digit) {
-			this.input += String(digit);
+			
+			this.$refs.myOtp.focus();
+
+			let element = document.querySelector('input');
+			element.dispatchEvent(new KeyboardEvent('keydown', {'key': String(digit)}));
+			
 			let audio = new Audio(keyAudio);
 			audio.play();
 		},
 
 		blankVote() {
-			this.input = '';
 			let audio = new Audio(keyAudio);
 			audio.play();
 		},
 
 		reviseVote() {
-			this.input = '';
+			this.$refs.otpInput.clearInput();
 			let audio = new Audio(keyAudio);
 			audio.play();
 		},
@@ -200,6 +286,29 @@ export default {
 			let audio = new Audio(confirmAudio);
 			audio.play();
 		},
+
+		setErrorFor(field, message) {
+
+			let formControl = field.parentElement;
+			let small = formControl.querySelector('b-small');
+
+			formControl.className = 'create-form-control error';
+			small.innerText = message;
+		},
+
+		setSuccessFor(field) {
+
+			let formControl = field.parentElement;
+			formControl.className = 'create-form-control success';
+
+			setTimeout(function() {
+				formControl.className = 'create-form-control';
+			}, 2500);
+		},
+
+		informElection(election) {
+			this.authVoteElectionForm.ElectionID = election.ID;
+		}
 	},
 	created() {
 		this.getElections();
@@ -298,5 +407,61 @@ a {
 }
 button:hover {
 	opacity: 0.8;
+}
+.vue-otp-2 {
+	display: center;
+	margin: 0 auto;
+	width: 20%;
+}
+.otp-input {
+	width: 20%;
+	justify-content: center;
+    padding: 5px;
+    margin: 0 auto;
+    font-size: 20px;
+    text-align: center;
+}
+.otp-input::-webkit-inner-spin-button,
+.otp-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* Error messages and styling on inputs */
+.create-form-control .exclamation {
+	visibility: hidden;
+}
+.create-form-control.error .exclamation {
+	color: #e74c3c;
+	position: relative;
+	bottom: 33px;
+	left: 228px;
+	visibility: visible;
+}
+.create-form-control .check {
+	visibility: hidden;
+}
+.create-form-control.success .check {
+	color: #73ff00;
+	position: relative;
+	bottom: 33px;
+	left: 206px;
+	visibility: visible;
+}
+.create-form-control.success input {
+	border: 2px solid #73ff00;
+}
+.create-form-control.error input {
+	border: 2px solid #e74c3c;
+}
+.create-form-control b-small {
+	font-size: 14px;
+	position: absolute;
+	left: 5%;
+	margin-top: 5px;
+	visibility: hidden;
+}
+.create-form-control.error b-small {
+	color: #ff0000;
+	visibility: visible;
 }
 </style>
