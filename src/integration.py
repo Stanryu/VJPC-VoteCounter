@@ -16,6 +16,7 @@ from directories import *
 from pathlib import Path
 from os import listdir
 from os import remove
+from voteMarking import marking
 import base64
 import json
 import uuid
@@ -372,84 +373,95 @@ def show_elections():
     if request.method == 'POST':
 
         post_data = request.get_json()
-        voter_id = post_data.get('ID')
-        election_id = post_data.get('ElectionID')
-        message = post_data.get('Password')
-        
-        chdir(str(Path.home()))
-        chdir('..')
-        chdir('..')
 
-        with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_privateKey.pem', 'r') as pk_file:
-            with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_masterPassword.json', 'r') as pswd_file:
-        
-                sign_key = pk_file.read().encode()
+        if len(post_data) == 3:
+            voter_id = post_data.get('ID')
+            election_id = post_data.get('ElectionID')
+            message = post_data.get('Password')
+            
+            chdir(str(Path.home()))
+            chdir('..')
+            chdir('..')
 
-                data = json.load(pswd_file)
-                salt = data['Board Member'][0]['Salt']
-                tag = data['Board Member'][0]['Tag']
+            with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_privateKey.pem', 'r') as pk_file:
+                with open(getcwd() +  'media/julio/7A2F-BA93/Private Keys/' + election_id + '_masterPassword.json', 'r') as pswd_file:
+            
+                    sign_key = pk_file.read().encode()
 
-                salt = salt.removesuffix("'")
-                salt = salt.removeprefix("b'")
-                salt = salt.encode()
-                tag = tag.removesuffix("'")
-                tag = tag.removeprefix("b'")
-                tag = tag.encode()
+                    data = json.load(pswd_file)
+                    salt = data['Board Member'][0]['Salt']
+                    tag = data['Board Member'][0]['Tag']
 
-                password_key = scrypt(sign_key, salt.decode('unicode-escape').encode('ISO-8859-1'), 16, N=2**14, r=8, p=1)
-                h = HMAC.new(password_key, digestmod=SHA256)
-                h.update(bytes(message, 'utf-8'))
+                    salt = salt.removesuffix("'")
+                    salt = salt.removeprefix("b'")
+                    salt = salt.encode()
+                    tag = tag.removesuffix("'")
+                    tag = tag.removeprefix("b'")
+                    tag = tag.encode()
 
-                try:
-                    h.verify(tag.decode('unicode-escape').encode('ISO-8859-1'))
-                    response_object = {'status': 'success'}
-                    response_object['message'] = 'Authentication Successful!'
-                except ValueError:
-                    response_object = {'status': 'failed'}
-                    response_object['message'] = 'Authentication Failed!'
+                    password_key = scrypt(sign_key, salt.decode('unicode-escape').encode('ISO-8859-1'), 16, N=2**14, r=8, p=1)
+                    h = HMAC.new(password_key, digestmod=SHA256)
+                    h.update(bytes(message, 'utf-8'))
 
-        chdir(current_dir)
+                    try:
+                        h.verify(tag.decode('unicode-escape').encode('ISO-8859-1'))
+                        response_object = {'status': 'success'}
+                        response_object['message'] = 'Authentication Successful!'
+                    except ValueError:
+                        response_object = {'status': 'failed'}
+                        response_object['message'] = 'Authentication Failed!'
 
-        authorized = False
-        ghost = True
-        try:
-            with open(f'{getcwd()}{general_data}{stat}{output}{election_id}_report.json', 'r') as config:
-                with open(f'{getcwd()}{general_data}{stat}{people}{election_id}_control.json', 'r') as control:
-                
-                    report_data = json.load(config)
-                    control_data = json.load(control)
+            chdir(current_dir)
 
-                    for voter, enable in zip(report_data['Eleitores'], control_data['Eleitores']):
+            authorized = False
+            ghost = True
+            try:
+                with open(f'{getcwd()}{general_data}{stat}{output}{election_id}_report.json', 'r') as config:
+                    with open(f'{getcwd()}{general_data}{stat}{people}{election_id}_control.json', 'r') as control:
                         
-                        hash_input = voter_id + voter['Salt']
+                        report_data = json.load(config)
+                        control_data = json.load(control)
+                        election_roles = report_data['Cargos']
 
-                        if voter['Authentication'] == SHA256.new(voter_id.encode()).hexdigest() and\
-                        enable['Authentication'] == SHA256.new(hash_input.encode()).hexdigest() and\
-                        voter['Salt'] == enable['Salt'] and enable['Vote'] == False:
+                        for voter, enable in zip(report_data['Eleitores'], control_data['Eleitores']):
+                            
+                            hash_input = voter_id + voter['Salt']
 
-                            enable['Vote'] = True
-                            authorized = True
-                            ghost = False
+                            if voter['Authentication'] == SHA256.new(voter_id.encode()).hexdigest() and\
+                            enable['Authentication'] == SHA256.new(hash_input.encode()).hexdigest() and\
+                            voter['Salt'] == enable['Salt'] and enable['Vote'] == False:
 
-                            # Atualiza o arquivo de configuração, marcando eleitores que já votaram
-                            # control_data = json.dumps(control_data.copy(), indent=4)
-                            # with open(f'{getcwd()}{general_data}{stat}{people}{election_id}_control.json', 'w') as file:
-                            #     file.write(control_data)
+                                enable['Vote'] = True
+                                authorized = True
+                                ghost = False
 
-                            break
-                        elif voter['Authentication'] == SHA256.new(voter_id.encode()).hexdigest() and enable['Vote'] == True:
-                            ghost = False
-                            break
+                                # Atualiza o arquivo de configuração, marcando eleitores que já votaram
+                                # control_data = json.dumps(control_data.copy(), indent=4)
+                                # with open(f'{getcwd()}{general_data}{stat}{people}{election_id}_control.json', 'w') as file:
+                                #     file.write(control_data)
 
-        except (FileExistsError, FileNotFoundError):
-            print('Os arquivos não foram encontrados ou não existem!\n')
+                                break
+                            elif voter['Authentication'] == SHA256.new(voter_id.encode()).hexdigest() and enable['Vote'] == True:
+                                ghost = False
+                                break
 
-        if ghost:
-            response_object['Voter'] = 'Ghost'
-        elif not authorized:
-            response_object['Voter'] = 'Disabled'
-        elif authorized and not ghost:
-            response_object['Voter'] = 'Enabled'
+            except (FileExistsError, FileNotFoundError):
+                print('Os arquivos não foram encontrados ou não existem!\n')
+
+            if ghost:
+                response_object['Voter'] = 'Ghost'
+            elif not authorized:
+                response_object['Voter'] = 'Disabled'
+            elif authorized and not ghost:
+                response_object['Voter'] = 'Enabled'
+                response_object['Roles'] = election_roles
+
+        else:
+
+            election_id = post_data.get('ID')
+            voter_choice = post_data.get('Choice')
+            digits = post_data.get('Digits')
+            steps = post_data.get('Steps')
     
     elif request.method == 'GET':
         
@@ -514,7 +526,7 @@ def tally_elections():
 
             ELECTIONS.append(each_election)
 
-        app_elections = sorted(ELECTIONS.copy(), key=itemgetter('StartDate', 'StartTime'))
+        app_elections = sorted(ELECTIONS.copy(), key=itemgetter('EndDate', 'EndTime'))
         app_elections.reverse()
         response_object['elections'] = app_elections
         ELECTIONS.clear()

@@ -91,27 +91,40 @@
 			<b-modal ref="votingModal" id="vote-modal" title="Enter your vote" hide-footer>
 					<!-- <b-form @submit="onSubmit" @reset="onReset" class="w-100 text-center"> -->
 				
-				<!-- <vue-otp-2
-					length="8"
-					inputmode="numeric"
-					pattern="[0-9]"
-				/> -->
+				<div class="urna-tela">
+					<div v-if="votingSession.Screen != 'end'" class="urna-tela-voto">
+						<div class="urna-tela-voto-textos">
+							<h2 class="urna-tela-voto-titulo">Your vote for: {{  votingSession.Screen }}</h2>
+							<div class="each-number">
+								<h2>Vote</h2>
 
-				<div class="otp-input" style="display: flex; flex-direction: row;">
-				<v-otp-input
-					ref="otpInput"
-					input-classes="otp-input"
-					separator="-"
-					:num-inputs="4"
-					:should-auto-focus="true"
-					:is-input-num="true"
-				/>
+								<div
+									class="otp-box"
+									v-for="(value, key) in votingSession.VoteChoice.padEnd(votingSession.DigitsQuantity, ' ')"
+									:key="key"
+								>
+									{{ value }}
+								</div>
+							</div>
+
+							<hr>
+							<div class="urna-tela-voto-descricao">
+								Name:<strong> {{ votingSession.candidate.Name ? votingSession.candidate.Name : "________" }} </strong>
+							</div>
+
+							<div class="urna-tela-voto-descricao">
+								Party:<strong>{{ votingSession.candidate.Party ? votingSession.candidate.Party : " ________" }}</strong>
+							</div>
+
+						</div>
+					</div>
+					<div v-if="votingSession.Screen == 'end'" class="urna-tela-fim">FIM</div>
 				</div>
 
 				<hr>
 				<br><br>
 
-				<div class="urn-keyboard">
+				<div v-if="votingSession.Screen != 'end'" class="urn-keyboard">
 
 					<div class="alphanumeric">
 						<div class="alphanumeric-row">
@@ -163,7 +176,20 @@ export default {
 				'ID': '',
 				'ElectionID': ''
 			},
-			input: ''
+			votingSession: {
+				'DigitsQuantity': 0,
+				'VoteChoice': '',
+				'Screen': '',
+				candidate: {
+					'Name': '',
+					'Party': ''
+				}
+			},
+			electionData: [],
+			voteID: '',
+			postVote: [],
+			digits: [],
+			steps: []
 		};
 	},
 	
@@ -182,6 +208,25 @@ export default {
 		clearPswd() {
 			this.authVoteElectionForm.Password = '';
 			this.authVoteElectionForm.ID = '';
+		},
+
+		clearVoteScreen() {
+			this.votingSession.DigitsQuantity = 0;
+			this.votingSession.VoteChoice = '';
+			this.votingSession.Screen = '';
+			this.votingSession.candidate.Name = '';
+			this.votingSession.candidate.Party = '';
+			this.postVote = [];
+			this.digits = [];
+			this.steps = [];
+		},
+
+		swapStage() {
+			this.votingSession.Screen = this.electionData[0].Nome;
+			this.votingSession.DigitsQuantity = this.electionData[0].Digitos;
+			this.votingSession.VoteChoice = '';
+			this.votingSession.candidate.Name = '';
+			this.votingSession.candidate.Party = '';
 		},
 
 		inProgress(election) {
@@ -225,6 +270,10 @@ export default {
 				
 				if (res.data['status'] == 'success' && res.data['Voter'] == 'Enabled') 
 				{
+					this.electionData = res.data['Roles'];
+					this.voteID = payload.ID;
+					this.votingSession.Screen = this.electionData[0].Nome;
+					this.votingSession.DigitsQuantity = this.electionData[0].Digitos;
 					this.$refs.authenticateVote.hide();
 					this.$refs.votingModal.show();
 				} 
@@ -259,32 +308,107 @@ export default {
 				this.getElections();
 			});
 		},
-		// eslint-disable-next-line
-		addNumber(digit) {
-			
-			this.$refs.myOtp.focus();
 
-			let element = document.querySelector('input');
-			element.dispatchEvent(new KeyboardEvent('keydown', {'key': String(digit)}));
-			
+		checkCandidate(payload) {
+			const path = 'http://localhost:5000/voting';
+			axios.post(path, payload)
+			.then((res) => {
+				return res.data['Name'];
+			})
+			.catch((err) => {
+				alert(err);
+				this.getElections();
+			});
+		},
+		
+		addNumber(digit) {
+		
 			let audio = new Audio(keyAudio);
 			audio.play();
+
+			if (this.votingSession.VoteChoice.length == this.votingSession.DigitsQuantity)
+				return false;
+			
+			this.votingSession.VoteChoice += String(digit);
+
+			// const payload = {
+			// 	ID: this.voteID,
+			// 	Role: this.votingSession.Screen,
+			// 	Choice: this.votingSession.VoteChoice
+			// }
+			
+			// let candName = this.checkCandidate(payload);
+			// if (candName != '')
+			// 	this.votingSession.candidate.Name = candName;
+
 		},
 
 		blankVote() {
 			let audio = new Audio(keyAudio);
 			audio.play();
+
+			this.postVote.push('');
+			this.electionData.shift();
+			
+			this.swapStage();
 		},
 
 		reviseVote() {
-			this.$refs.otpInput.clearInput();
+			
 			let audio = new Audio(keyAudio);
 			audio.play();
+
+			this.votingSession.VoteChoice = '';
+			this.votingSession.candidate.Name = '';
+			this.votingSession.candidate.Party = '';
 		},
 
 		confirmVote() {
+
+			if (this.votingSession.VoteChoice.length < this.votingSession.DigitsQuantity) {
+				alert('Vote field incomplete!');
+				return false;
+			}
+
+			let stepSize = this.steps.length - 1;
+			this.digits.push(this.votingSession.DigitsQuantity);
+
+			if (this.digits.length == 0) 
+				this.steps.push(this.votingSession.DigitsQuantity);
+			else 
+				this.steps.push(this.steps[stepSize] + this.votingSession.DigitsQuantity);	
+
+			this.electionData.shift();
 			let audio = new Audio(confirmAudio);
 			audio.play();
+
+			this.postVote.push(this.votingSession.VoteChoice);
+
+			if (this.electionData.length == 0) {
+				alert(this.postVote);
+				this.clearVoteScreen();
+				this.votingSession.Screen = 'end';
+
+				// const payload = {
+				// 	ID: this.voteID,
+				// 	Choice: this.postVote,
+				// 	Digits: this.digits,
+				// 	Steps: this.steps
+				// }
+
+				// const path = 'http://localhost:5000/voting';
+				// axios.post(path, payload)
+				// .then((res) => {
+				// 	console.log(res.data);
+				// })
+				// .catch((err) => {
+				// 	alert(err);
+				// 	this.getElections();
+				// });
+				return false;
+			}
+
+			this.swapStage();
 		},
 
 		setErrorFor(field, message) {
@@ -463,5 +587,101 @@ button:hover {
 .create-form-control.error b-small {
 	color: #ff0000;
 	visibility: visible;
+}
+
+.urna-tela {
+	margin: 0 auto;
+	width: 55%;
+	height: 100%;
+	background-color: #ffffff;
+	border-radius: 5px;
+	border: 2px solid #000000;
+	padding: 20px;
+	color: #000000;
+}
+.urna-tela-voto {
+	text-align: center;
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+	height: 100%;
+}
+.urna-tela-voto-textos {
+	margin: 0 auto;
+}
+.urna-tela-voto-titulo {
+	font-weight: bold;
+	font-size: 20px;
+}
+.each-number {
+	text-align: center;
+	display: flex;
+	align-items: center;
+}
+.otp-box {
+	width: 45px;
+	height: 55px;
+	border: 1px solid #000000;
+	margin-left: 10px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 30px;
+}
+.urna-tela-voto-descricao {
+	margin-top: 20px;
+	font-size: 18px;
+}
+.urna-tela-voto-imagem img {
+	width: 110px;
+	height: 150px;
+	border: 1px solid #000000;
+}
+.urna-tela-voto-instrucoes {
+	width: 100%;
+	border-top: 1px solid #000000;
+	font-size: 13px;
+	margin-top: 20px;
+	padding-top: 10px;
+}
+.urna-tela-fim {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	align-items: center;
+	font-size: 120px;
+	width: 100%;
+	height: 100%;
+}
+.urna-tela-fim p {
+	font-size: 12px;
+}
+	@media (max-width: 900px) {
+	.urna-tela {
+		padding: 15px 18px 15px 18px;
+	}
+	.urna-tela-voto-titulo {
+		font-size: 15px;
+	}
+	.urna-tela-voto-textos {
+		flex: 1;
+		font-size: 14px;
+	}
+	.otp-box {
+		width: 20px;
+		height: 25px;
+		font-size: 20px;
+		margin-left: 7px;
+	}
+	.urna-tela-voto-imagem img {
+		width: 70px;
+		height: 100px;
+	}
+	.urna-tela-voto-instrucoes {
+		width: 80%;
+		font-size: 10px;
+		margin-top: 10px;
+		padding-top: 5px;
+	}
 }
 </style>
